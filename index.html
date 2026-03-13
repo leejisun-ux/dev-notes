@@ -2189,35 +2189,50 @@ body.sidebar-collapsed #sidebar-toggle-btn .arrow-icon {
           <div class="steps" style="margin-top:16px;">
             <div class="step"><div class="step-num">1</div><div class="step-text"><strong>GitHub 가입</strong> — github.com 에서 가입 (이미 있으면 생략)</div></div>
             <div class="step"><div class="step-num">2</div><div class="step-text"><strong>새 Repository 만들기</strong> — "dev-notes" 같은 이름으로. Public으로 설정</div></div>
-            <div class="step"><div class="step-num">3</div><div class="step-text"><strong>HTML 파일 업로드</strong> — 파일 이름을 반드시 <span style="font-family:var(--font-mono); font-size:12px; background:var(--surface2); padding:1px 6px; border-radius:3px;">index.html</span> 로 바꾸고 업로드</div></div>
-            <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Vercel 가입</strong> — vercel.com → "Continue with GitHub"으로 로그인</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text"><strong>HTML 파일 업로드</strong> — 파일 이름을 반드시 <span style="font-family:var(--font-mono); font-size:12px; background:var(--surface2); padding:1px 6px; border-radius:3px;">index.html</span> 로 바꾸고, 레포 화면에서 <strong>"uploading an existing file"</strong> 링크 클릭 → 드래그앤드롭 → <strong>Commit changes</strong> 버튼 클릭.<br/><span style="color:var(--status-cautionary); font-size:12px;">⚠️ 파일 업로드 전에 Vercel Deploy 누르면 에러남 — 파일 먼저!</span></div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Vercel 가입</strong> — vercel.com 접속. 이미 Google로 가입한 계정이 있다면 <strong>"Continue with Google"</strong>로 로그인 (GitHub 이메일과 같은 경우 Google 로그인 후 GitHub 연결)</div></div>
             <div class="step"><div class="step-num">5</div><div class="step-text"><strong>Import 하기</strong> — "Add New Project" → 방금 만든 GitHub Repository 선택 → Deploy 버튼</div></div>
-            <div class="step"><div class="step-num">6</div><div class="step-text"><strong>완료!</strong> — <span style="font-family:var(--font-mono); font-size:12px;">https://dev-notes-xxx.vercel.app</span> 같은 URL이 생겨요. 즐겨찾기 해두면 끝</div></div>
+            <div class="step"><div class="step-num">6</div><div class="step-text"><strong>완료!</strong> — <span style="font-family:var(--font-mono); font-size:12px;">https://dev-notes-xxx.vercel.app</span> 같은 URL이 생겨요. 즐겨찾기 해두면 끝<br/><span style="color:var(--text-3); font-size:12px;">링크를 직접 공유하지 않는 이상 외부에 노출되지 않아요.</span></div></div>
           </div>
         </div>
 
         <div class="divider"></div>
 
         <div class="block">
-          <h3>🔄 나중에 내용 업데이트하려면?</h3>
-          <div class="concept-grid">
-            <div class="ccard">
-              <div class="ccard-icon">🤖</div>
-              <div class="ccard-title">방법 A — Claude에게 맡기기 (지금처럼)</div>
-              <div class="ccard-body">
-                HTML 파일을 Claude에게 업로드하고<br/>
-                <em>"이 내용 추가해줘" / "이 페이지 수정해줘"</em><br/><br/>
-                → 수정된 파일 받아서 GitHub에 올리면 Vercel이 자동 반영<br/><br/>
-                <strong style="color:var(--accent);">✓ 지금 쓰는 방식. 가장 쉬움</strong>
+          <h3>🔄 파일 수정 후 GitHub에 올리는 법</h3>
+          <p style="color:var(--text-2); font-size:13px; margin-bottom:16px; line-height:1.7;">Claude한테 수정된 파일을 받았으면, GitHub에 올려야 Vercel에 자동 반영돼요.</p>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><div class="step-text"><strong>GitHub 레포 열기</strong> — <span style="font-family:var(--font-mono); font-size:12px; background:var(--surface2); padding:1px 6px; border-radius:3px;">github.com/[내아이디]/dev-notes</span></div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text"><strong>index.html 클릭</strong> — 파일 목록에서 index.html 선택</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text"><strong>연필 ✏️ 아이콘 클릭</strong> — 우측 상단에 있어요. 편집 모드로 진입</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text"><strong>전체 선택 후 붙여넣기</strong> — <span style="font-family:var(--font-mono); font-size:12px; background:var(--surface2); padding:1px 6px; border-radius:3px;">Cmd+A</span> → 삭제 → Claude가 준 새 파일 내용 전체 붙여넣기</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-text"><strong>Commit changes 클릭</strong> — 초록 버튼. 누르는 순간 Vercel이 자동으로 반영해요 🎉</div></div>
+          </div>
+          <div class="callout callout-info" style="margin-top:16px;">
+            <span class="callout-icon">💡</span>
+            <div>Claude는 항상 수정된 <strong>.html 파일</strong>을 첨부해서 줘요. 코드가 아니라 파일 그대로 받아서 붙여넣기만 하면 돼요.</div>
+          </div>
+
+          <div style="margin-top:24px;">
+            <div class="block-label">🤔 어떤 방법으로 수정할까?</div>
+            <div class="concept-grid" style="margin-top:12px;">
+              <div class="ccard">
+                <div class="ccard-icon">🤖</div>
+                <div class="ccard-title">Claude (지금처럼)</div>
+                <div class="ccard-body">
+                  파일 업로드 → "이 내용 추가해줘"<br/>
+                  → 수정된 파일 받아서 GitHub에 붙여넣기<br/><br/>
+                  <strong style="color:var(--accent);">✓ 큰 구조 변경, 새 페이지 추가</strong>
+                </div>
               </div>
-            </div>
-            <div class="ccard">
-              <div class="ccard-icon">⌨️</div>
-              <div class="ccard-title">방법 B — Cursor로 직접 수정</div>
-              <div class="ccard-body">
-                Cursor에서 파일 열고 AI와 대화하며 수정<br/><br/>
-                간단한 텍스트 수정이나 색깔 변경은 Cursor가 더 빠름<br/><br/>
-                <strong style="color:var(--accent2);">✓ 구조 설계는 Claude, 세부 수정은 Cursor</strong>
+              <div class="ccard">
+                <div class="ccard-icon">⌨️</div>
+                <div class="ccard-title">Cursor</div>
+                <div class="ccard-body">
+                  파일 열고 AI와 대화하며 바로 수정<br/>
+                  간단한 텍스트·색깔 변경은 더 빠름<br/><br/>
+                  <strong style="color:var(--accent2);">✓ 작은 수정, 즉각 반영 확인</strong>
+                </div>
               </div>
             </div>
           </div>
