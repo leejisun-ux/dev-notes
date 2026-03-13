@@ -1,0 +1,2926 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>지선이의 AI × Design 노트</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────
+   DESIGN TOKENS — Wanted Montage 기반
+───────────────────────────────────── */
+:root {
+  --sidebar-w: 260px;
+  --sidebar-sliver: 40px;
+  --topbar-h: 48px;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --transition: 0.2s cubic-bezier(.4,0,.2,1);
+  --font-body: 'Noto Sans KR', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ── Light mode: Wanted Semantic 토큰 ── */
+[data-theme="light"] {
+  /* Background */
+  --bg:          #f7f7f8;   /* semantic-background-normal-alternative */
+  --sidebar-bg:  #ffffff;   /* semantic-background-normal-normal */
+  --surface:     #ffffff;   /* semantic-background-elevated-normal */
+  --surface2:    #f4f4f5;   /* semantic-interaction-disable */
+
+  /* Border / Line */
+  --border:      #e1e2e4;   /* semantic-line-solid-normal */
+  --border2:     #eaebec;   /* semantic-line-solid-neutral */
+
+  /* Label (Text) */
+  --text:        #171719;   /* semantic-label-normal */
+  --text-2:      rgba(46,47,51,.875); /* semantic-label-neutral */
+  --text-3:      rgba(55,56,60,.608); /* semantic-label-alternative */
+
+  /* Primary (Accent) */
+  --accent:      #0066ff;   /* semantic-primary-normal */
+  --accent-bg:   #eaf2fe;   /* atomic-blue-95 */
+  --accent2:     #0098b2;   /* semantic-accent-foreground-cyan */
+
+  /* Status */
+  --status-positive: #00bf40;  /* semantic-status-positive */
+  --status-cautionary: #ff9200; /* semantic-status-cautionary */
+  --status-negative: #ff4242;  /* semantic-status-negative */
+
+  /* Shadow — Wanted elevation */
+  --shadow-sm:   0px 1px 2px -1px rgba(23,23,25,.10);
+  --shadow-md:   0px 4px 6px -2px rgba(23,23,25,.07), 0px 10px 15px -3px rgba(23,23,25,.07);
+}
+
+/* ── Dark mode: Wanted Semantic 다크 토큰 ── */
+[data-theme="dark"] {
+  /* Background */
+  --bg:          #171719;   /* semantic-label-normal (inverted base) */
+  --sidebar-bg:  #1b1c1e;   /* semantic-inverse-background */
+  --surface:     #212225;   /* atomic-coolNeutral-17 */
+  --surface2:    #2e2f33;   /* atomic-coolNeutral-22 */
+
+  /* Border / Line */
+  --border:      #37383c;   /* atomic-coolNeutral-25 */
+  --border2:     #46474c;   /* atomic-coolNeutral-30 */
+
+  /* Label (Text) */
+  --text:        #f7f7f8;   /* semantic-inverse-label */
+  --text-2:      #aeb0b6;   /* atomic-coolNeutral-80 */
+  --text-3:      #5a5c63;   /* atomic-coolNeutral-40 */
+
+  /* Primary (Accent) */
+  --accent:      #3385ff;   /* semantic-inverse-primary */
+  --accent-bg:   rgba(51,133,255,.12);
+  --accent2:     #28d0ed;   /* atomic-cyan-60 */
+
+  /* Status */
+  --status-positive: #1ed45a;  /* atomic-green-60 */
+  --status-cautionary: #ffa938; /* atomic-orange-60 */
+  --status-negative: #ff6363;  /* atomic-red-60 */
+
+  /* Shadow */
+  --shadow-sm:   0px 1px 2px -1px rgba(0,0,0,.35);
+  --shadow-md:   0px 4px 6px -2px rgba(0,0,0,.3), 0px 10px 15px -3px rgba(0,0,0,.3);
+}
+
+/* ─────────────────────────────────────
+   RESET
+───────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  transition: background var(--transition), color var(--transition);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ─────────────────────────────────────
+   SIDEBAR
+───────────────────────────────────── */
+/* ── MUI-style sidebar overlay (mobile) ── */
+#sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  z-index: 49;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+#sidebar-overlay.visible {
+  opacity: 1;
+}
+
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition), background var(--transition), border-color var(--transition), box-shadow var(--transition);
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+}
+
+/* Desktop collapse: push content */
+@media (min-width: 769px) {
+  body.sidebar-collapsed #sidebar {
+    width: var(--sidebar-sliver);
+    min-width: var(--sidebar-sliver);
+    border-right-color: var(--border);
+    overflow: hidden;
+  }
+  /* 접혔을 때 스크롤/푸터는 숨김 */
+  body.sidebar-collapsed .sidebar-logo,
+  body.sidebar-collapsed .sidebar-scroll,
+  body.sidebar-collapsed .sidebar-footer {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .sidebar-logo, .sidebar-scroll, .sidebar-footer {
+    transition: opacity var(--transition);
+  }
+
+}
+
+/* Mobile: drawer overlay style */
+@media (max-width: 768px) {
+  #sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+  body.sidebar-open #sidebar {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0,0,0,.18);
+  }
+  body.sidebar-open #sidebar-overlay {
+    display: block;
+  }
+  body.sidebar-open #sidebar-overlay.visible {
+    opacity: 1;
+  }
+  #main { width: 100%; }
+}
+
+.sidebar-header {
+  padding: 16px 16px 12px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  transition: border-color var(--transition);
+}
+
+/* 사이드바 경계선에 걸쳐있는 토글 버튼 */
+#sidebar-toggle-btn {
+  position: fixed;
+  top: calc(var(--topbar-h) + 60px);
+  left: calc(var(--sidebar-w) - 16px);
+  transform: translateY(-135%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--text-3);
+  z-index: 300;
+  box-shadow: var(--shadow-md);
+  transition: left var(--transition), background var(--transition), color var(--transition), border-color var(--transition), box-shadow var(--transition);
+  line-height: 1;
+  padding: 0;
+}
+
+#sidebar-toggle-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* 접혔을 때 버튼 위치: sliver 오른쪽 끝에 걸쳐짐 */
+body.sidebar-collapsed #sidebar-toggle-btn {
+  left: calc(var(--sidebar-sliver) - 16px);
+}
+
+.arrow-icon {
+  display: inline-block;
+  transition: transform var(--transition);
+  font-style: normal;
+}
+
+/* 접혔을 때 화살표 방향 반전 */
+body.sidebar-collapsed #sidebar-toggle-btn .arrow-icon {
+  transform: rotate(180deg);
+}
+
+/* 모바일에서는 숨김 */
+@media (max-width: 768px) {
+  #sidebar-toggle-btn { display: none; }
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-logo-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.sidebar-logo-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.sidebar-logo-sub {
+  font-size: 10px;
+  color: var(--text-3);
+  font-weight: 400;
+}
+
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0 20px;
+}
+
+.sidebar-scroll::-webkit-scrollbar { width: 3px; }
+.sidebar-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* nav item: Home */
+.nav-home {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  margin: 0 8px 4px;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+}
+.nav-home:hover, .nav-home.active {
+  background: var(--surface2);
+  color: var(--text);
+}
+.nav-home.active { color: var(--accent); background: var(--accent-bg); }
+
+/* group */
+.nav-group { margin-bottom: 4px; }
+
+.nav-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px 4px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.nav-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.nav-group-chevron {
+  font-size: 10px;
+  color: var(--text-3);
+  transition: transform var(--transition);
+}
+.nav-group.collapsed .nav-group-chevron { transform: rotate(-90deg); }
+
+.nav-group-items {
+  overflow: hidden;
+  transition: max-height 0.25s cubic-bezier(.4,0,.2,1);
+}
+.nav-group.collapsed .nav-group-items { max-height: 0 !important; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 20px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  margin: 1px 8px;
+  color: var(--text-2);
+  font-size: 13px;
+  transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.nav-item-icon { font-size: 14px; flex-shrink: 0; }
+.nav-item-label { overflow: hidden; text-overflow: ellipsis; }
+
+/* coming soon */
+.nav-item.soon { opacity: 0.45; cursor: default; }
+.nav-item.soon:hover { background: transparent; color: var(--text-2); }
+.soon-tag {
+  font-size: 9px;
+  background: var(--surface2);
+  color: var(--text-3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: auto;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.sidebar-footer {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* theme toggle switch */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-3);
+  font-size: 12px;
+  transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+  flex: 1;
+}
+.theme-toggle:hover { background: var(--surface2); color: var(--text-2); }
+
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.theme-switch {
+  width: 42px;
+  height: 24px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border2);
+  border-radius: 999px;
+  cursor: pointer;
+  position: relative;
+  transition: background var(--transition), border-color var(--transition);
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .theme-switch {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.theme-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-3);
+  transition: transform var(--transition), background var(--transition);
+}
+
+[data-theme="dark"] .theme-switch-thumb {
+  transform: translateX(18px);
+  background: #fff;
+}
+
+/* ─────────────────────────────────────
+   MAIN AREA
+───────────────────────────────────── */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* topbar */
+#topbar {
+  height: var(--topbar-h);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 48px;
+  gap: 0;
+  background: var(--sidebar-bg);
+  flex-shrink: 0;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+/* 기존 ☰ 토글 — 모바일에서만 표시 */
+.topbar-toggle {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-3);
+  display: none; /* 데스크탑에서는 숨김 */
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: background var(--transition), color var(--transition);
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+@media (max-width: 768px) {
+  .topbar-toggle { display: flex; }
+}
+
+.topbar-toggle:hover { background: var(--surface2); color: var(--text); }
+
+/* Notion-style breadcrumb nav */
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  flex: 1;
+}
+
+.topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  font-size: 13px;
+  min-width: 0;
+}
+
+/* 각 크럼 아이템 — hover 시 배경 */
+.bc-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-3);
+  font-weight: 500;
+  transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.bc-item:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+/* 현재 페이지 — 굵고 진하게, 클릭 없음 */
+.bc-item.bc-current {
+  color: var(--text);
+  font-weight: 600;
+  cursor: default;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bc-item.bc-current:hover {
+  background: transparent;
+  color: var(--text);
+}
+
+/* 구분자 › */
+.bc-sep {
+  color: var(--text-3);
+  font-size: 12px;
+  opacity: 0.5;
+  padding: 0 2px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+.topbar-date {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+
+/* content scroll */
+#content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+#content::-webkit-scrollbar { width: 5px; }
+#content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* page container */
+.page { display: none; animation: fadeIn .2s ease; }
+.page.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ─────────────────────────────────────
+   HOME PAGE
+───────────────────────────────────── */
+.home-hero {
+  padding: 56px 48px 28px;
+  transition: border-color var(--transition);
+}
+
+.home-emoji { font-size: 48px; margin-bottom: 16px; }
+
+.home-title {
+  font-size: clamp(26px, 4vw, 38px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+
+.home-title span {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.home-sub {
+  font-size: 15px;
+  color: var(--text-2);
+  max-width: 460px;
+  line-height: 1.7;
+}
+
+.home-body { padding: 32px 48px 60px; }
+
+.concept-map-pin {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--accent-bg);
+  border: 1.5px solid rgba(0,102,255,.25);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 32px;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+  box-shadow: 0px 1px 2px -1px rgba(23,23,25,.06);
+}
+.concept-map-pin:hover {
+  background: rgba(0,102,255,.10);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0px 4px 6px -2px rgba(0,102,255,.12), 0px 10px 15px -3px rgba(0,102,255,.08);
+}
+.cmp-left { display: flex; align-items: center; gap: 14px; }
+.cmp-icon { font-size: 28px; flex-shrink: 0; }
+.cmp-title { font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 3px; }
+.cmp-desc { font-size: 12px; color: var(--text-3); line-height: 1.5; }
+.cmp-arrow { font-size: 18px; color: var(--accent); flex-shrink: 0; opacity: 0.6; transition: transform var(--transition); }
+.concept-map-pin:hover .cmp-arrow { transform: translateX(4px); opacity: 1; }
+
+.home-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 14px;
+  margin-top: 32px;
+  font-family: var(--font-mono);
+}
+.home-section-label:first-child { margin-top: 0; }
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.home-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.home-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border2);
+  transform: translateY(-1px);
+}
+
+.home-card.soon-card { opacity: 0.5; cursor: default; }
+.home-card.soon-card:hover { transform: none; box-shadow: var(--shadow-sm); }
+
+.hc-icon { font-size: 24px; margin-bottom: 10px; }
+.hc-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.hc-desc  { font-size: 12px; color: var(--text-3); line-height: 1.5; }
+
+.hc-tag {
+  display: inline-block;
+  font-size: 9px;
+  font-family: var(--font-mono);
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-top: 8px;
+  background: var(--surface2);
+  color: var(--text-3);
+}
+
+.hc-tag.live {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+/* ─────────────────────────────────────
+   NOTE PAGE LAYOUT
+───────────────────────────────────── */
+.note-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 48px 80px;
+}
+
+@media (max-width: 700px) { .note-page { padding: 24px 20px 60px; } }
+
+.note-header {
+  margin-bottom: 36px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.note-emoji { font-size: 40px; margin-bottom: 12px; }
+.note-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.25; margin-bottom: 8px; }
+/* note-meta: breadcrumb으로 역할 이전 — 숨김 */
+.note-meta  { display: none; }
+
+/* ─────────────────────────────────────
+   CONTENT BLOCKS
+───────────────────────────────────── */
+.block { margin-bottom: 28px; }
+
+.block-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  margin-bottom: 12px;
+}
+
+.block h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+  letter-spacing: -0.3px;
+}
+
+.block p {
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.75;
+  margin-bottom: 8px;
+}
+
+/* table card */
+.tcard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.tcard-head {
+  display: grid;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 18px;
+  gap: 12px;
+  transition: background var(--transition);
+}
+
+.tcard-head span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+
+.trow {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  align-items: start;
+  transition: background var(--transition);
+  position: relative;
+}
+
+.trow:last-child { border-bottom: none; }
+.trow:hover { background: var(--surface2); }
+
+.trow::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+}
+
+/* accent colors */
+.ac-html::before  { background: #e96b47; }
+.ac-css::before   { background: #5b8af5; }
+.ac-js::before    { background: #d4a017; }
+.ac-jsx::before   { background: #22b8d4; }
+.ac-json::before  { background: #4caf7d; }
+.ac-env::before   { background: #e05252; }
+.ac-teal::before  { background: var(--accent2); }
+
+/* chips */
+.chip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 5px;
+  display: inline-block;
+  line-height: 1.5;
+}
+
+.chip-html  { background: rgba(233,107,71,.12); color: #c4501c; }
+.chip-css   { background: rgba(91,138,245,.12); color: #2d5cc8; }
+.chip-js    { background: rgba(212,160,23,.12);  color: #8a6200; }
+.chip-jsx   { background: rgba(34,184,212,.12);  color: #0e7a94; }
+.chip-json  { background: rgba(76,175,125,.12);  color: #2d7a50; }
+.chip-env   { background: rgba(224,82,82,.12);   color: #c03030; }
+.chip-cmd   { background: color-mix(in srgb, var(--accent2) 12%, transparent); color: var(--accent2); }
+
+[data-theme="dark"] .chip-html  { color: #e96b47; }
+[data-theme="dark"] .chip-css   { color: #7ab0ff; }
+[data-theme="dark"] .chip-js    { color: #f0c040; }
+[data-theme="dark"] .chip-jsx   { color: #61dafb; }
+[data-theme="dark"] .chip-json  { color: #7cd47a; }
+[data-theme="dark"] .chip-env   { color: #f56565; }
+
+.row-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.row-sub   { font-size: 12px; color: var(--text-3); line-height: 1.5; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-top: 5px;
+  font-weight: 500;
+}
+.badge-warn  { background: rgba(224,82,82,.09); color: #c03030; border: 1px solid rgba(224,82,82,.2); }
+.badge-react { background: rgba(34,184,212,.09); color: #0e7a94; border: 1px solid rgba(34,184,212,.2); }
+[data-theme="dark"] .badge-warn  { color: #f56565; border-color: rgba(245,101,101,.25); }
+[data-theme="dark"] .badge-react { color: #61dafb; border-color: rgba(97,218,251,.2); }
+
+.ex-list { display: flex; flex-direction: column; gap: 4px; }
+.ex-item { font-size: 12px; color: var(--text-3); display: flex; gap: 6px; line-height: 1.5; }
+.ex-item::before { content: '—'; opacity: .35; flex-shrink: 0; }
+
+/* callout */
+.callout {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.65;
+  margin-bottom: 12px;
+  border: 1px solid;
+}
+.callout-info  { background: var(--accent-bg); border-color: #c9defe; }
+.callout-warn  { background: rgba(255,66,66,.06); border-color: rgba(255,66,66,.20); }    /* semantic-status-negative */
+.callout-green { background: rgba(0,191,64,.07); border-color: rgba(0,191,64,.22); }      /* semantic-status-positive */
+[data-theme="dark"] .callout-info  { border-color: rgba(51,133,255,.25); }
+[data-theme="dark"] .callout-warn  { background: rgba(255,99,99,.08); border-color: rgba(255,99,99,.22); }
+[data-theme="dark"] .callout-green { background: rgba(30,212,90,.08); border-color: rgba(30,212,90,.22); }
+.callout-icon  { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+/* concept cards */
+.concept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.ccard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.ccard:hover { border-color: var(--border2); }
+
+.ccard-icon  { font-size: 22px; margin-bottom: 10px; }
+.ccard-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+.ccard-body  { font-size: 12px; color: var(--text-3); line-height: 1.65; }
+
+/* method badges */
+.method-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.method-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.method-name {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.m-get   { color: #2d7a50; }
+.m-post  { color: #2d5cc8; }
+.m-other { color: var(--text-3); }
+[data-theme="dark"] .m-get  { color: #7cd47a; }
+[data-theme="dark"] .m-post { color: #7ab0ff; }
+
+.method-body { font-size: 12px; color: var(--text-3); line-height: 1.6; }
+
+/* code block */
+.code-block {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.9;
+  overflow-x: auto;
+}
+
+.ck { color: var(--accent); }
+.cv { color: var(--accent2); }
+.cs { color: #c97c3a; }
+[data-theme="dark"] .cs { color: #e8a87c; }
+
+/* flow 3-col */
+.flow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.flow-col { background: var(--surface); border-right: 1px solid var(--border); }
+.flow-col:last-child { border-right: none; }
+
+.flow-head {
+  background: var(--surface2);
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  letter-spacing: 0.3px;
+}
+
+.flow-body {
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.9;
+}
+
+.flow-body li {
+  list-style: none;
+  display: flex;
+  gap: 5px;
+}
+
+.flow-body li::before { content: '›'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+
+/* steps */
+.steps { display: flex; flex-direction: column; gap: 10px; }
+
+.step { display: flex; gap: 12px; align-items: flex-start; }
+
+.step-num {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+}
+
+.step-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+.step-text strong { color: var(--text); font-weight: 600; }
+
+/* restaurant table */
+.rest-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+.rest-row {
+  display: contents;
+}
+.rest-cell {
+  padding: 11px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-2);
+}
+.rest-cell.header {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  background: var(--surface2);
+  font-family: var(--font-mono);
+  padding: 10px 16px;
+}
+.rest-cell.accent { color: var(--accent); font-weight: 500; }
+
+/* note cards grid */
+.note-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.note-card-sm {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.nc-icon  { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.nc-title { font-size: 12px; font-weight: 600; margin-bottom: 3px; }
+.nc-body  { font-size: 11px; color: var(--text-3); line-height: 1.55; }
+
+/* divider */
+.divider { height: 1px; background: var(--border); margin: 28px 0; transition: background var(--transition); }
+
+/* ─────────────────────────────────────
+   CONCEPT MAP
+───────────────────────────────────── */
+.cm-level-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 4px;
+}
+
+.cm-level-num {
+  font-size: 11px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+.cm-level-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cm-confused {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.6;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.cm-confused:hover {
+  border-color: var(--accent);
+  background: var(--surface2);
+}
+
+.cm-confused-num {
+  font-size: 10px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--accent);
+  flex-shrink: 0;
+  padding-top: 2px;
+  min-width: 20px;
+}
+
+.cm-confused-title {
+  font-weight: 700;
+  color: var(--text);
+}
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.cm-badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.cm-content {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.65;
+  padding-top: 2px;
+}
+
+.cm-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.cm-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.cm-card-body {
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.55;
+}
+
+/* ─────────────────────────────────────
+   LINK CARDS (트렌드 페이지)
+───────────────────────────────────── */
+.link-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  text-decoration: none;
+  color: var(--text);
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.link-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent), var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.lc-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  min-width: 180px;
+}
+
+.lc-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--surface2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+
+.lc-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.lc-url {
+  font-size: 11px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+
+.lc-desc {
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.55;
+  flex: 1;
+}
+
+.lc-arrow {
+  font-size: 16px;
+  color: var(--text-3);
+  flex-shrink: 0;
+  transition: color var(--transition), transform var(--transition);
+}
+
+.link-card:hover .lc-arrow {
+  color: var(--accent);
+  transform: translate(2px, -2px);
+}
+
+@media (max-width: 600px) {
+  .link-card { flex-wrap: wrap; }
+  .lc-left { min-width: unset; }
+  .lc-arrow { display: none; }
+}
+
+/* ─────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────── */
+@media (max-width: 600px) {
+  .method-row, .flow-grid { grid-template-columns: 1fr; }
+  .home-hero, .home-body { padding-left: 24px; padding-right: 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar collapse button — 경계선에 걸쳐있는 독립 버튼 -->
+<button id="sidebar-toggle-btn" onclick="toggleSidebar()" title="사이드바 접기/펴기" aria-label="사이드바 접기/펴기">
+  <span class="arrow-icon">‹</span>
+</button>
+
+<!-- MUI overlay (mobile) -->
+<div id="sidebar-overlay" onclick="closeSidebarMobile()"></div>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<aside id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo" onclick="showPage('home')" style="cursor:pointer;" title="홈으로 이동">
+      <div class="sidebar-logo-icon">📖</div>
+      <div>
+        <div class="sidebar-logo-text">AI × Design 노트</div>
+        <div class="sidebar-logo-sub">by 지선 · vibe & design</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-scroll">
+
+    <div class="nav-home active" onclick="showPage('home')" id="nav-home">
+      <span>🏠</span> 홈
+    </div>
+    <div class="nav-item" id="nav-concept-map" onclick="showPage('concept-map')" style="margin:2px 8px 6px; font-weight:600;">
+      <span class="nav-item-icon">🗺️</span>
+      <span class="nav-item-label">개념 지도</span>
+    </div>
+
+    <!-- 📚 기초 학습 -->
+    <div class="nav-group" id="grp-basics">
+      <div class="nav-group-header" onclick="toggleGroup('grp-basics')">
+        <span class="nav-group-label">📚 기초 학습</span>
+        <span class="nav-group-chevron">▾</span>
+      </div>
+      <div class="nav-group-items" style="max-height:400px">
+        <div class="nav-item" id="nav-ext" onclick="showPage('ext')">
+          <span class="nav-item-icon">📄</span>
+          <span class="nav-item-label">파일 확장자</span>
+        </div>
+        <div class="nav-item" id="nav-terminal" onclick="showPage('terminal')">
+          <span class="nav-item-icon">⌨️</span>
+          <span class="nav-item-label">터미널 명령어</span>
+        </div>
+        <div class="nav-item" id="nav-api" onclick="showPage('api')">
+          <span class="nav-item-icon">🔌</span>
+          <span class="nav-item-label">API · HTTP 기초</span>
+        </div>
+        <div class="nav-item" id="nav-n8n" onclick="showPage('n8n')">
+          <span class="nav-item-icon">🔄</span>
+          <span class="nav-item-label">n8n 자동화</span>
+        </div>
+        <div class="nav-item soon">
+          <span class="nav-item-icon">⚛️</span>
+          <span class="nav-item-label">React 기초</span>
+          <span class="soon-tag">soon</span>
+        </div>
+        <div class="nav-item soon">
+          <span class="nav-item-icon">🐙</span>
+          <span class="nav-item-label">Git / GitHub</span>
+          <span class="soon-tag">soon</span>
+        </div>
+        <div class="nav-item soon">
+          <span class="nav-item-icon">🤖</span>
+          <span class="nav-item-label">AI 프롬프팅</span>
+          <span class="soon-tag">soon</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🛠 바이브코딩 실습 -->
+    <div class="nav-group" id="grp-vibe">
+      <div class="nav-group-header" onclick="toggleGroup('grp-vibe')">
+        <span class="nav-group-label">🛠 바이브코딩 실습</span>
+        <span class="nav-group-chevron">▾</span>
+      </div>
+      <div class="nav-group-items" style="max-height:400px">
+        <div class="nav-item" id="nav-lora" onclick="showPage('lora')">
+          <span class="nav-item-icon">🧠</span>
+          <span class="nav-item-label">LoRA & AI 이미지</span>
+        </div>
+        <div class="nav-item" id="nav-deploy-guide" onclick="showPage('deploy-guide')">
+          <span class="nav-item-icon">🚀</span>
+          <span class="nav-item-label">배포 & Cursor 가이드</span>
+        </div>
+        <div class="nav-item soon">
+          <span class="nav-item-icon">🖼</span>
+          <span class="nav-item-label">Fal.ai / Replicate</span>
+          <span class="soon-tag">soon</span>
+        </div>
+        <div class="nav-item soon">
+          <span class="nav-item-icon">⌨️</span>
+          <span class="nav-item-label">Cursor IDE 사용법</span>
+          <span class="soon-tag">soon</span>
+        </div>
+        <div class="nav-item soon">
+          <span class="nav-item-icon">🏗</span>
+          <span class="nav-item-label">웹 앱 구조 이해</span>
+          <span class="soon-tag">soon</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🔥 AI 트렌드 -->
+    <div class="nav-group" id="grp-trend">
+      <div class="nav-group-header" onclick="toggleGroup('grp-trend')">
+        <span class="nav-group-label">🔥 AI 트렌드</span>
+        <span class="nav-group-chevron">▾</span>
+      </div>
+      <div class="nav-group-items" style="max-height:300px">
+        <div class="nav-item" id="nav-trend" onclick="showPage('trend')">
+          <span class="nav-item-icon">🔗</span>
+          <span class="nav-item-label">레퍼런스 탐색</span>
+        </div>
+        <div class="nav-item soon">
+          <span class="nav-item-icon">📰</span>
+          <span class="nav-item-label">위클리 뉴스</span>
+          <span class="soon-tag">soon</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 구분선 -->
+    <div style="height:1px; background:var(--border); margin:10px 12px;"></div>
+    <div style="padding:8px 14px 4px; font-size:10px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:rgba(0,102,255,.7); font-family:var(--font-mono);">✦ AI CREW PROJECT</div>
+
+    <!-- AI 크루 — 프로젝트 기록 -->
+    <div class="nav-group" id="grp-aicrew-log">
+      <div class="nav-group-header" onclick="toggleGroup('grp-aicrew-log')">
+        <span class="nav-group-label">📁 프로젝트 기록</span>
+        <span class="nav-group-chevron">▾</span>
+      </div>
+      <div class="nav-group-items" style="max-height:300px">
+        <div class="nav-item" id="nav-aicrew-overview" onclick="showPage('aicrew-overview')">
+          <span class="nav-item-icon">🗺</span>
+          <span class="nav-item-label">프로젝트 개요</span>
+        </div>
+        <div class="nav-item soon">
+          <span class="nav-item-icon">📋</span>
+          <span class="nav-item-label">진행 상황</span>
+          <span class="soon-tag">wip</span>
+        </div>
+        <div class="nav-item soon">
+          <span class="nav-item-icon">🪞</span>
+          <span class="nav-item-label">회고 & 메모</span>
+          <span class="soon-tag">wip</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI 크루 — 기술 실습 -->
+    <div class="nav-group" id="grp-aicrew-learn">
+      <div class="nav-group-header" onclick="toggleGroup('grp-aicrew-learn')">
+        <span class="nav-group-label">🧪 프로젝트 기술</span>
+        <span class="nav-group-chevron">▾</span>
+      </div>
+      <div class="nav-group-items" style="max-height:300px">
+        <div class="nav-item" id="nav-lora-aicrew" onclick="showPage('lora')" style="display:none;">
+          <span class="nav-item-icon">🧠</span>
+          <span class="nav-item-label">LoRA & AI 이미지</span>
+        </div>
+        <div class="nav-item soon">
+          <span class="nav-item-icon">🖼</span>
+          <span class="nav-item-label">Fal.ai / Replicate</span>
+          <span class="soon-tag">soon</span>
+        </div>
+        <div class="nav-item soon">
+          <span class="nav-item-icon">🏗</span>
+          <span class="nav-item-label">웹 앱 구조 이해</span>
+          <span class="soon-tag">soon</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="sidebar-footer">
+    <div style="display:flex; align-items:center; gap:10px; width:100%;">
+      <span id="themeLabel" style="font-size:11px; color:var(--text-3); flex:1; white-space:nowrap;">다크 모드로 전환</span>
+      <div class="theme-switch" onclick="toggleTheme()" id="themeSwitch" title="테마 전환" style="flex-shrink:0;">
+        <div class="theme-switch-thumb" id="themeSwitchThumb"></div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<div id="main">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <button class="topbar-toggle" onclick="toggleSidebar()" title="메뉴">☰</button>
+    <div class="topbar-nav">
+      <div class="topbar-breadcrumb" id="topbar-breadcrumb">
+        <!-- JS로 동적 렌더 -->
+        <span class="bc-item bc-current">홈</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topbar-date"></span>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- ══ HOME ══ -->
+    <div class="page active" id="page-home">
+      <div class="home-hero">
+        <div class="home-emoji">✦</div>
+        <div class="home-title">지선이의<br/><span>AI × Design 노트</span></div>
+        
+      </div>
+
+      <div class="home-body">
+
+        <!-- ── 섹션 0: 개념 지도 (핀) ── -->
+        <div class="concept-map-pin" onclick="showPage('concept-map')">
+          <div class="cmp-left">
+            <div class="cmp-icon">🗺️</div>
+            <div>
+              <div class="cmp-title">코딩 개념 지도</div>
+              <div class="cmp-desc">헷갈리는 개념 전체를 9단계 레벨로 정리. 처음 시작하거나 복습할 때 여기부터.</div>
+            </div>
+          </div>
+          <div class="cmp-arrow">→</div>
+        </div>
+
+        <!-- ── 섹션 1: 기초 학습 ── -->
+        <div class="home-section-label">📚 기초 학습</div>
+        <div class="card-grid">
+          <div class="home-card" onclick="showPage('ext')">
+            <div class="hc-icon">📄</div>
+            <div class="hc-title">파일 확장자</div>
+            <div class="hc-desc">.html .css .js .jsx .json .env — 각 파일의 역할</div>
+            <div class="hc-tag live">작성 완료</div>
+          </div>
+          <div class="home-card" onclick="showPage('terminal')">
+            <div class="hc-icon">⌨️</div>
+            <div class="hc-title">터미널 명령어</div>
+            <div class="hc-desc">cd, ls, mkdir, npm install, npm run dev — 필수 5개</div>
+            <div class="hc-tag live">작성 완료</div>
+          </div>
+          <div class="home-card" onclick="showPage('api')">
+            <div class="hc-icon">🔌</div>
+            <div class="hc-title">API · HTTP 기초</div>
+            <div class="hc-desc">Endpoint · Method · Headers · Body — HTTP 요청의 4요소</div>
+            <div class="hc-tag live">작성 완료</div>
+          </div>
+          <div class="home-card" onclick="showPage('n8n')">
+            <div class="hc-icon">🔄</div>
+            <div class="hc-title">n8n 자동화</div>
+            <div class="hc-desc">Parameters 채우는 법, API 키 관리, Replicate 연동</div>
+            <div class="hc-tag live">작성 완료</div>
+          </div>
+          <div class="home-card soon-card">
+            <div class="hc-icon">⚛️</div>
+            <div class="hc-title">React 기초</div>
+            <div class="hc-desc">컴포넌트, props, state — 리액트의 핵심 개념</div>
+            <div class="hc-tag">준비 중</div>
+          </div>
+          <div class="home-card soon-card">
+            <div class="hc-icon">🐙</div>
+            <div class="hc-title">Git / GitHub</div>
+            <div class="hc-desc">버전 관리와 협업의 기초</div>
+            <div class="hc-tag">준비 중</div>
+          </div>
+          <div class="home-card soon-card">
+            <div class="hc-icon">🤖</div>
+            <div class="hc-title">AI 프롬프팅</div>
+            <div class="hc-desc">Claude를 잘 쓰는 법, 프롬프트 구조화</div>
+            <div class="hc-tag">준비 중</div>
+          </div>
+        </div>
+
+        <!-- ── 섹션 2: 바이브코딩 실습 ── -->
+        <div class="home-section-label" style="margin-top:36px;">🛠 바이브코딩 실습</div>
+        <div class="card-grid">
+          <div class="home-card" onclick="showPage('lora')">
+            <div class="hc-icon">🧠</div>
+            <div class="hc-title">LoRA & AI 이미지</div>
+            <div class="hc-desc">LoRA 개념, 이미지 학습 흐름, Fal.ai vs Replicate</div>
+            <div class="hc-tag live">작성 완료</div>
+          </div>
+          <div class="home-card" onclick="showPage('deploy-guide')">
+            <div class="hc-icon">🚀</div>
+            <div class="hc-title">배포 & Cursor 가이드</div>
+            <div class="hc-desc">GitHub + Vercel 배포, Cursor로 수정하는 법</div>
+            <div class="hc-tag live">작성 완료</div>
+          </div>
+          <div class="home-card soon-card">
+            <div class="hc-icon">⌨️</div>
+            <div class="hc-title">Cursor IDE 사용법</div>
+            <div class="hc-desc">바이브코딩 핵심 도구 — AI와 함께 코딩하는 법</div>
+            <div class="hc-tag">soon</div>
+          </div>
+          <div class="home-card soon-card">
+            <div class="hc-icon">🏗</div>
+            <div class="hc-title">웹 앱 구조 이해</div>
+            <div class="hc-desc">프론트엔드 / 백엔드 / API가 어떻게 연결되는지</div>
+            <div class="hc-tag">soon</div>
+          </div>
+        </div>
+
+        <!-- ── 섹션 3: AI 트렌드 ── -->
+        <div class="home-section-label" style="margin-top:36px;">🔥 AI 트렌드</div>
+        <div class="card-grid">
+          <div class="home-card" onclick="showPage('trend')">
+            <div class="hc-icon">🔗</div>
+            <div class="hc-title">레퍼런스 탐색</div>
+            <div class="hc-desc">AI · 바이브코딩 · 디자인 트렌드 큐레이션 링크 모음</div>
+            <div class="hc-tag live">작성 완료</div>
+          </div>
+          <div class="home-card soon-card">
+            <div class="hc-icon">📰</div>
+            <div class="hc-title">위클리 뉴스</div>
+            <div class="hc-desc">매주 눈에 띄는 AI · 디자인 뉴스 정리</div>
+            <div class="hc-tag">준비 중</div>
+          </div>
+        </div>
+
+        <!-- ── AI CREW 구분선 ── -->
+        <div style="margin-top:44px; margin-bottom:16px; display:flex; align-items:center; gap:12px;">
+          <div style="flex:1; height:1px; background:var(--border);"></div>
+          <div style="font-size:11px; font-weight:800; letter-spacing:2px; color:rgba(0,102,255,.7); font-family:var(--font-mono); white-space:nowrap;">✦ AI CREW PROJECT</div>
+          <div style="flex:1; height:1px; background:var(--border);"></div>
+        </div>
+
+        <!-- ── 섹션 4: 프로젝트 기록 ── -->
+        <div class="home-section-label">📁 프로젝트 기록</div>
+        <div class="card-grid">
+          <div class="home-card" onclick="showPage('aicrew-overview')">
+            <div class="hc-icon">🗺</div>
+            <div class="hc-title">프로젝트 개요</div>
+            <div class="hc-desc">1인 디자이너의 브랜드 AI 이미지 생성 도구 — 목표, 툴 스택, 로드맵</div>
+            <div class="hc-tag live">작성 완료</div>
+          </div>
+          <div class="home-card soon-card">
+            <div class="hc-icon">📋</div>
+            <div class="hc-title">진행 상황</div>
+            <div class="hc-desc">단계별 진행 기록 및 막힌 지점 메모</div>
+            <div class="hc-tag">wip</div>
+          </div>
+          <div class="home-card soon-card">
+            <div class="hc-icon">🪞</div>
+            <div class="hc-title">회고 & 메모</div>
+            <div class="hc-desc">시도해본 것, 실패한 것, 배운 것</div>
+            <div class="hc-tag">wip</div>
+          </div>
+        </div>
+
+        <!-- ── 섹션 5: 프로젝트 기술 ── -->
+        <div class="home-section-label" style="margin-top:24px;">🧪 프로젝트 기술</div>
+        <div class="card-grid">
+          <div class="home-card" onclick="showPage('lora')">
+            <div class="hc-icon">🧠</div>
+            <div class="hc-title">LoRA & AI 이미지</div>
+            <div class="hc-desc">LoRA 개념, 이미지 학습 흐름 — AI 크루 핵심 기술</div>
+            <div class="hc-tag live">작성 완료</div>
+          </div>
+          <div class="home-card soon-card">
+            <div class="hc-icon">🖼</div>
+            <div class="hc-title">Fal.ai / Replicate</div>
+            <div class="hc-desc">AI 이미지 API 비교 및 실습</div>
+            <div class="hc-tag">soon</div>
+          </div>
+          <div class="home-card soon-card">
+            <div class="hc-icon">🏗</div>
+            <div class="hc-title">웹 앱 구조 이해</div>
+            <div class="hc-desc">프론트엔드 / 백엔드 / API가 어떻게 연결되는지</div>
+            <div class="hc-tag">soon</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ 파일 확장자 ══      </div>
+    </div>
+
+    <!-- ══ 파일 확장자 ══ -->
+    <div class="page" id="page-ext">
+      <div class="note-page">
+        <div class="note-header">
+          <div class="note-emoji">📄</div>
+          <div class="note-title">파일 확장자</div>
+          <div class="note-meta">
+            <span>🌐 웹 기초</span>
+            <span>Chapter 01</span>
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="tcard">
+            <div class="tcard-head" style="grid-template-columns:100px 1fr 1fr">
+              <span>확장자</span><span>역할</span><span>예시</span>
+            </div>
+            <div class="trow ac-html" style="grid-template-columns:100px 1fr 1fr">
+              <div><span class="chip chip-html">.html</span></div>
+              <div><div class="row-title">🦴 웹페이지의 뼈대</div><div class="row-sub">이 파일 없으면? 아무것도 안 보임</div></div>
+              <div class="ex-list"><div class="ex-item">텍스트, 이미지 배치</div><div class="ex-item">버튼, 링크, 입력창</div><div class="ex-item">페이지의 기본 구조</div></div>
+            </div>
+            <div class="trow ac-css" style="grid-template-columns:100px 1fr 1fr">
+              <div><span class="chip chip-css">.css</span></div>
+              <div><div class="row-title">👗 웹페이지의 옷</div><div class="row-sub">이 파일 없으면? 흰 배경에 검은 글자만 남음</div></div>
+              <div class="ex-list"><div class="ex-item">색깔, 글꼴, 크기</div><div class="ex-item">간격, 배치, 정렬</div><div class="ex-item">애니메이션 효과</div></div>
+            </div>
+            <div class="trow ac-js" style="grid-template-columns:100px 1fr 1fr">
+              <div><span class="chip chip-js">.js</span></div>
+              <div><div class="row-title">🧠 웹페이지의 두뇌</div><div class="row-sub">이 파일 없으면? 버튼 눌러도 아무 반응 없음</div></div>
+              <div class="ex-list"><div class="ex-item">버튼 클릭 시 동작</div><div class="ex-item">데이터 처리·계산</div><div class="ex-item">서버와 데이터 주고받기</div></div>
+            </div>
+            <div class="trow ac-jsx" style="grid-template-columns:100px 1fr 1fr">
+              <div><span class="chip chip-jsx">.jsx<br/>.tsx</span></div>
+              <div><div class="row-title">⚛️ React용 JS 파일</div><div class="row-sub">JS 파일 안에 HTML 태그를 바로 쓸 수 있는 파일</div><div class="badge badge-react">⚛ React 전용</div></div>
+              <div class="ex-list"><div class="ex-item">Header, Button 같은 컴포넌트 (레고 블록)</div><div class="ex-item">한 번 만들어서 여러 곳에 재사용</div><div class="ex-item">.tsx = 타입 검사 기능 추가 버전</div></div>
+            </div>
+            <div class="trow ac-json" style="grid-template-columns:100px 1fr 1fr">
+              <div><span class="chip chip-json">.json</span></div>
+              <div><div class="row-title">📋 프로젝트 설정 파일</div><div class="row-sub">이 파일 없으면? 프로젝트가 뭔지 아무도 모름</div></div>
+              <div class="ex-list"><div class="ex-item">프로젝트 이름·버전</div><div class="ex-item">필요한 라이브러리 목록</div><div class="ex-item">대표 파일: package.json</div></div>
+            </div>
+            <div class="trow ac-env" style="grid-template-columns:100px 1fr 1fr">
+              <div><span class="chip chip-env">.env</span></div>
+              <div><div class="row-title">🔐 비밀번호 모음</div><div class="row-sub">남에게 절대 보여주면 안 되는 정보</div><div class="badge badge-warn">⚠ Git에 절대 올리면 안 됨</div></div>
+              <div class="ex-list"><div class="ex-item">API 키</div><div class="ex-item">데이터베이스 비밀번호</div><div class="ex-item">서버 주소·인증 정보</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="note-cards">
+          <div class="note-card-sm"><div class="nc-icon">📚</div><div><div class="nc-title">배우는 순서</div><div class="nc-body">HTML → CSS → JS 맛보기 → React (.jsx/.tsx) 순서가 자연스러워요</div></div></div>
+          <div class="note-card-sm"><div class="nc-icon">🧩</div><div><div class="nc-title">JS와 React의 관계</div><div class="nc-body">JS가 언어라면 React는 그 언어로 만든 편의 도구. React는 JS 없이 존재할 수 없어요</div></div></div>
+          <div class="note-card-sm"><div class="nc-icon">⚛️</div><div><div class="nc-title">요즘 현업은?</div><div class="nc-body">거의 대부분 React 기반. 디자인 시스템도 React가 표준</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 터미널 ══ -->
+    <div class="page" id="page-terminal">
+      <div class="note-page">
+        <div class="note-header">
+          <div class="note-emoji">⌨️</div>
+          <div class="note-title">터미널 명령어</div>
+          <div class="note-meta"><span>기초 학습</span><span>터미널 명령어</span></div>
+        </div>
+
+        <div class="block">
+          <div class="tcard">
+            <div class="tcard-head" style="grid-template-columns:180px 1fr">
+              <span>명령어</span><span>의미 & 비유</span>
+            </div>
+            <div class="trow ac-teal" style="grid-template-columns:180px 1fr">
+              <div><span class="chip chip-cmd">cd 폴더이름</span></div>
+              <div><div class="row-title">📂 해당 폴더로 이동</div><div class="row-sub">"이 방으로 들어간다" — 집 안에서 방을 이동하는 것</div></div>
+            </div>
+            <div class="trow ac-teal" style="grid-template-columns:180px 1fr">
+              <div><span class="chip chip-cmd">ls</span></div>
+              <div><div class="row-title">👀 현재 폴더 안에 뭐가 있는지 보여줌</div><div class="row-sub">"이 방에 뭐가 있지?" 하고 둘러보는 명령어</div></div>
+            </div>
+            <div class="trow ac-teal" style="grid-template-columns:180px 1fr">
+              <div><span class="chip chip-cmd">mkdir 폴더이름</span></div>
+              <div><div class="row-title">🗂 새 폴더를 만드는 명령어</div><div class="row-sub">make directory의 줄임말. 새 방을 만드는 것</div></div>
+            </div>
+            <div class="trow ac-teal" style="grid-template-columns:180px 1fr">
+              <div><span class="chip chip-cmd">npm install</span></div>
+              <div><div class="row-title">📦 프로젝트에 필요한 재료를 자동 다운로드</div><div class="row-sub">요리로 치면 "재료 장보기" — package.json에 적힌 재료를 한 번에</div></div>
+            </div>
+            <div class="trow ac-teal" style="grid-template-columns:180px 1fr">
+              <div><span class="chip chip-cmd">npm run dev</span></div>
+              <div><div class="row-title">🚀 프로젝트를 로컬에서 실행</div><div class="row-sub">"내 컴퓨터에서 미리보기" — 인터넷에 올리기 전 테스트</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <span class="callout-icon">💡</span>
+          <span>Windows라면 <strong>ls</strong> 대신 <strong>dir</strong>을 써요. Mac / Linux는 ls가 기본이에요.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ API 기초 ══ -->
+    <div class="page" id="page-api">
+      <div class="note-page">
+        <div class="note-header">
+          <div class="note-emoji">🔌</div>
+          <div class="note-title">API 기초</div>
+          <div class="note-meta"><span>기초 학습</span><span>API · HTTP 기초</span></div>
+        </div>
+
+        <div class="block">
+          <h3>API란?</h3>
+          <p>두 서비스가 서로 "대화"할 수 있게 해주는 통로. n8n과 Gmail, Gmail과 Claude가 데이터를 주고받는 방법이 바로 API예요. API가 없으면 서비스끼리 소통 불가 → 자동화도 불가능.</p>
+        </div>
+
+        <div class="block">
+          <h3>API와 HTTP의 관계</h3>
+          <p>이 둘은 자주 같이 나와서 같은 말처럼 느껴지지만, 역할이 달라요.</p>
+          <div class="concept-grid" style="margin-top:12px; margin-bottom:14px;">
+            <div class="ccard" style="border-left:3px solid var(--accent);">
+              <div class="ccard-icon">📋</div>
+              <div class="ccard-title">API — 대화 규칙</div>
+              <div class="ccard-body">"이 주소로 이렇게 요청하면, 이런 데이터를 돌려줄게"라는 <strong>약속</strong>이에요. 어떤 수단으로 전달할지는 상관 안 해요.</div>
+            </div>
+            <div class="ccard" style="border-left:3px solid var(--accent2);">
+              <div class="ccard-icon">🚚</div>
+              <div class="ccard-title">HTTP — 전달 수단</div>
+              <div class="ccard-body">인터넷에서 데이터를 실어 나르는 <strong>배송 시스템</strong>이에요. API의 요청/응답을 실제로 전달하는 역할을 해요.</div>
+            </div>
+          </div>
+          <div class="callout callout-info">
+            <span class="callout-icon">💡</span>
+            <div>
+              비유: API = <strong>배송 주소 규칙 + 계약서</strong>, HTTP = <strong>택배 트럭</strong><br/>
+              대부분의 API가 HTTP로 작동해서 거의 같은 말처럼 쓰이지만, 엄밀히는 <strong>HTTP가 API보다 더 하위 개념</strong>이에요.
+            </div>
+          </div>
+
+          <div style="margin-top:16px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 18px;">
+            <div style="font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text-3); font-family:var(--font-mono); margin-bottom:12px;">전체 흐름 한 줄</div>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:13px; line-height:2;">
+              <span style="background:var(--accent-bg); color:var(--accent); padding:3px 10px; border-radius:5px; font-weight:500;">React 화면</span>
+              <span style="color:var(--text-3);">→ 버튼 클릭 →</span>
+              <span style="background:color-mix(in srgb, var(--accent2) 12%, transparent); color:var(--accent2); padding:3px 10px; border-radius:5px; font-weight:500;">HTTP로 전달</span>
+              <span style="color:var(--text-3);">→</span>
+              <span style="background:var(--accent-bg); color:var(--accent); padding:3px 10px; border-radius:5px; font-weight:500;">API 규칙대로 요청</span>
+              <span style="color:var(--text-3);">→ 서버 처리 →</span>
+              <span style="background:rgba(76,175,125,.12); color:#009632; padding:3px 10px; border-radius:5px; font-weight:500;">JSON으로 응답</span>
+              <span style="color:var(--text-3);">→</span>
+              <span style="background:var(--accent-bg); color:var(--accent); padding:3px 10px; border-radius:5px; font-weight:500;">화면에 표시</span>
+            </div>
+            <div style="margin-top:10px; font-size:11px; color:var(--text-3);">HTML/CSS/JS·React는 화면 담당 &nbsp;·&nbsp; JSON은 데이터 포장 형식 &nbsp;·&nbsp; HTTP는 전달 수단 &nbsp;·&nbsp; API는 대화 규칙</div>
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="block-label">🍽 식당 비유로 이해하기</div>
+          <div class="tcard">
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr;">
+              <div class="rest-cell header">식당</div>
+              <div class="rest-cell header">API 세계</div>
+              <div class="rest-cell header">설명</div>
+              <div class="rest-cell">손님 (나)</div>
+              <div class="rest-cell accent">클라이언트 (n8n)</div>
+              <div class="rest-cell">요청하는 쪽</div>
+              <div class="rest-cell">메뉴판</div>
+              <div class="rest-cell accent">API 문서</div>
+              <div class="rest-cell">가능한 요청 목록</div>
+              <div class="rest-cell">웨이터</div>
+              <div class="rest-cell accent">HTTP 요청</div>
+              <div class="rest-cell">주문을 전달하는 역할</div>
+              <div class="rest-cell">주방</div>
+              <div class="rest-cell accent">서버 (Server)</div>
+              <div class="rest-cell">실제 처리하는 곳</div>
+              <div class="rest-cell" style="border-bottom:none">음식</div>
+              <div class="rest-cell accent" style="border-bottom:none">응답 데이터</div>
+              <div class="rest-cell" style="border-bottom:none">결과물</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="block">
+          <h3>HTTP 요청의 4가지 구성요소</h3>
+          <div class="concept-grid" style="margin-bottom:16px">
+            <div class="ccard">
+              <div class="ccard-icon">🎯</div>
+              <div class="ccard-title">Endpoint</div>
+              <div class="ccard-body">정확한 주소. 어떤 서비스의 어떤 기능을 쓸지 명시. 주소가 틀리면 요청 실패.<br/><br/><span style="font-family:var(--font-mono); font-size:11px; color:var(--accent)">api.replicate.com/v1/models/.../predictions</span></div>
+            </div>
+            <div class="ccard">
+              <div class="ccard-icon">📋</div>
+              <div class="ccard-title">Headers</div>
+              <div class="ccard-body">택배 송장처럼 부가 정보를 담아요. 인증(API 키), 데이터 형식 등을 명시.</div>
+            </div>
+            <div class="ccard">
+              <div class="ccard-icon">📬</div>
+              <div class="ccard-title">Method</div>
+              <div class="ccard-body">어떤 방식으로 요청할지. GET(가져오기) / POST(보내기)를 90% 이상 사용.</div>
+            </div>
+            <div class="ccard">
+              <div class="ccard-icon">📝</div>
+              <div class="ccard-title">Body</div>
+              <div class="ccard-body">상세 요청 정보. POST 요청에서 주로 사용. JSON 형식으로 작성.</div>
+            </div>
+          </div>
+
+          <div class="callout callout-warn">
+            <span class="callout-icon">⚠️</span>
+            <span>API 키 = 비밀번호. 타인이 내 키로 요청하면 <strong>내 비용으로 청구</strong>돼요. 절대 공개하면 안 됨!</span>
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="block-label">Method 종류</div>
+          <div class="method-row">
+            <div class="method-card">
+              <div class="method-name m-get">GET</div>
+              <div class="method-body">데이터를 읽어옴. 서버에 변화 없음<br/>예) 날씨 조회, 이메일 목록</div>
+            </div>
+            <div class="method-card">
+              <div class="method-name m-post">POST</div>
+              <div class="method-body">새 데이터 생성 또는 작업 실행<br/>예) AI 이미지 생성, 메시지 발송</div>
+            </div>
+            <div class="method-card">
+              <div class="method-name m-other">PUT / DELETE</div>
+              <div class="method-body">수정 / 삭제. 사용 빈도 낮음.<br/>현업에선 GET·POST가 90%+</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="block-label">Body 예시 (JSON)</div>
+          <p style="margin-bottom:8px">"파스타 주세요"가 기본 요청이라면, Body는 "면 곱빼기, 마늘 추가, 치즈 빼주세요" 같은 상세 옵션.</p>
+          <div class="code-block">
+{<br/>
+&nbsp;&nbsp;<span class="ck">"input"</span>: {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="ck">"prompt"</span>: <span class="cs">"Make the sheets in the style of the logo"</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="ck">"image_input"</span>: <span class="cv">[이미지 URL 배열]</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="ck">"aspect_ratio"</span>: <span class="cs">"match_input_image"</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="ck">"output_format"</span>: <span class="cs">"jpg"</span><br/>
+&nbsp;&nbsp;}<br/>
+}
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="block-label">전체 흐름</div>
+          <div class="flow-grid">
+            <div class="flow-col">
+              <div class="flow-head">1단계 — 문서 확인</div>
+              <div class="flow-body"><ul>
+                <li>어떤 Endpoint가 있는지</li>
+                <li>어떤 Method를 써야 하는지</li>
+                <li>어떤 Headers가 필요한지</li>
+                <li>Body에 뭘 넣어야 하는지</li>
+              </ul></div>
+            </div>
+            <div class="flow-col">
+              <div class="flow-head">2단계 — 요청 구성</div>
+              <div class="flow-body"><ul>
+                <li>Endpoint URL 설정</li>
+                <li>Method 선택 (GET/POST)</li>
+                <li>Headers에 API 키 입력</li>
+                <li>Body에 JSON 데이터 작성</li>
+              </ul></div>
+            </div>
+            <div class="flow-col">
+              <div class="flow-head">3단계 — 전송 & 수신</div>
+              <div class="flow-body"><ul>
+                <li>서버가 요청 처리</li>
+                <li>JSON 형식으로 결과 반환</li>
+                <li>성공 또는 에러 확인</li>
+              </ul></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ n8n 실습 ══ -->
+    <div class="page" id="page-n8n">
+      <div class="note-page">
+        <div class="note-header">
+          <div class="note-emoji">🔄</div>
+          <div class="note-title">n8n 실습</div>
+          <div class="note-meta"><span>기초 학습</span><span>n8n 자동화</span></div>
+        </div>
+
+        <div class="block">
+          <h3>Parameters 채우는 2가지 방법</h3>
+        </div>
+
+        <div class="block">
+          <div class="block-label">방법 1 — Claude에게 물어보기</div>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><div class="step-text">비어있는 parameters 캡쳐해서 Claude에게 전달</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text"><strong>"해당 문서와 명령어를 드릴테니 각 항목에 어떻게 채워야 하는지 알려주세요"</strong> 라고 요청</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text">Replicate에서 이미지 모델 HTTP 복사 → <strong>API 탭 → Schema 선택 → Input scheme 복사</strong></div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text">API reference 탭 → 모든 내용 복사 → Claude 채팅에 붙여넣기</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-text">답변 받고 n8n에 하나씩 기입</div></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="block">
+          <div class="block-label">방법 2 — curl import 사용 (더 빠름!)</div>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><div class="step-text">Replicate에서 테스트 실행</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Recent predictions</strong> 클릭 → HTTP 복사</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text">n8n에서 <strong>[import curl 버튼]</strong> 클릭 → 붙여넣기 → 자동으로 설정 완성!</div></div>
+          </div>
+          <div class="callout callout-green" style="margin-top:14px">
+            <span class="callout-icon">✨</span>
+            <span>테스트 후 자동으로 설정이 채워지므로 방법 1보다 훨씬 빠름</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="block">
+          <h3>🔐 API 키 보안 설정</h3>
+          <div class="callout callout-warn" style="margin-bottom:16px">
+            <span class="callout-icon">⚠️</span>
+            <span>채워진 Parameters에서 <strong>Authorization Bearer</strong> 부분이 타인에게 노출되면 큰일! 반드시 아래 방법으로 처리할 것</span>
+          </div>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><div class="step-text">Header Parameters에서 <strong>Authorization Bearer 항목 삭제</strong></div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text">상단 Authentication → <strong>Generic Credential Type</strong> 선택</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text">Generic Auth Type → <strong>Bearer Auth</strong> 선택</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text">Bearer Auth → <strong>Create new credential</strong> → 이름을 "Replicate"으로 기입</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-text">Replicate 홈페이지 → Account Settings → API tokens → 새 토큰 이름 입력 → <strong>[Create token]</strong> → 복사 → n8n에 붙여넣기</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ AI 크루 — 프로젝트 개요 ══ -->
+    <div class="page" id="page-aicrew-overview">
+      <div class="note-page">
+        <div class="note-header">
+          <div class="note-emoji">🗺</div>
+          <div class="note-title">AI 크루 — 프로젝트 개요</div>
+          <div class="note-meta"><span>✦ AI CREW PROJECT</span><span>프로젝트 기록</span></div>
+        </div>
+
+        <div class="block">
+          <h3>한 줄 요약</h3>
+          <p>코딩 경험이 적은 1인 UI 디자이너가, 회사 브랜드 그래픽 스타일(자산 34종)을 학습한 AI 이미지 생성 웹 프로토타입을 직접 만들어 검증한다.</p>
+          <div class="callout callout-info" style="margin-top:12px;">
+            <span class="callout-icon">🎯</span>
+            <div><strong>핵심 목적:</strong> 프롬프트 수작업을 줄이고, 브랜드 일관성이 유지되는 초안 생성 도구를 만들어 실무에 쓸 수 있는지 검증</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="block">
+          <h3>🛠 툴 스택</h3>
+          <div class="concept-grid">
+            <div class="ccard">
+              <div class="ccard-icon">⌨️</div>
+              <div class="ccard-title">Cursor</div>
+              <div class="ccard-body">Claude 3.5 Sonnet 기반 AI IDE. "바이브 코딩"으로 코드 직접 짜지 않고 AI와 대화하며 개발</div>
+            </div>
+            <div class="ccard">
+              <div class="ccard-icon">🖼</div>
+              <div class="ccard-title">Replicate / Fal.ai</div>
+              <div class="ccard-body">34종 이미지로 LoRA 학습 후 API 연결. 브랜드 스타일을 AI가 학습하도록 하는 엔진</div>
+            </div>
+            <div class="ccard">
+              <div class="ccard-icon">🚀</div>
+              <div class="ccard-title">Vercel</div>
+              <div class="ccard-body">완성된 웹 프로토타입을 인터넷에 띄우는 배포 플랫폼. GitHub 연동으로 자동 배포</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="block">
+          <h3>🗓 큰 그림 로드맵</h3>
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-text"><strong>기초 학습</strong> — 파일 구조, 터미널, API 개념 익히기 (지금 이 학습장!)</div>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-text"><strong>이미지 학습</strong> — 브랜드 자산 34종으로 Fal.ai 또는 Replicate에서 LoRA 학습</div>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-text"><strong>프로토타입 제작</strong> — Cursor로 웹 UI 만들기. 프롬프트 입력 → 이미지 생성 화면</div>
+            </div>
+            <div class="step">
+              <div class="step-num">4</div>
+              <div class="step-text"><strong>API 연결</strong> — 학습된 모델 API를 웹앱에 붙이기</div>
+            </div>
+            <div class="step">
+              <div class="step-num">5</div>
+              <div class="step-text"><strong>배포 & 검증</strong> — Vercel로 배포, 실제 업무에서 써보며 검증</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="block">
+          <h3>❓ 지금 가장 큰 질문들</h3>
+          <div class="callout callout-warn">
+            <span class="callout-icon">🤔</span>
+            <div>34종이 LoRA 학습에 충분한 데이터인가? 최소 몇 장이 필요한가?</div>
+          </div>
+          <div class="callout callout-warn">
+            <span class="callout-icon">🤔</span>
+            <div>Fal.ai vs Replicate — 어느 게 비용/성능 면에서 더 나은가?</div>
+          </div>
+          <div class="callout callout-warn">
+            <span class="callout-icon">🤔</span>
+            <div>Cursor 바이브코딩으로 실제로 얼마나 짤 수 있는가?</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ LoRA & AI 이미지 학습 ══ -->
+    <div class="page" id="page-lora">
+      <div class="note-page">
+        <div class="note-header">
+          <div class="note-emoji">🧠</div>
+          <div class="note-title">LoRA & AI 이미지 학습</div>
+          <div class="note-meta"><span>✦ AI CREW PROJECT</span><span>기술 학습</span></div>
+        </div>
+
+        <div class="block">
+          <h3>LoRA란?</h3>
+          <p>Low-Rank Adaptation의 줄임말. AI 이미지 모델 전체를 처음부터 다시 학습시키지 않고, <strong>"이 스타일만 추가로 학습"</strong>시키는 가벼운 방법이에요.</p>
+          <div class="callout callout-info" style="margin-top:12px;">
+            <span class="callout-icon">🎨</span>
+            <div>비유: 이미 그림을 잘 그리는 화가(기반 모델)에게 "우리 회사 스타일 샘플 30장"을 보여주고, 그 스타일만 따로 학습시키는 것</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="block">
+          <h3>기반 모델 vs LoRA</h3>
+          <div class="tcard">
+            <div class="tcard-head" style="grid-template-columns:1fr 1fr 1fr">
+              <span>구분</span><span>기반 모델</span><span>LoRA</span>
+            </div>
+            <div class="trow" style="grid-template-columns:1fr 1fr 1fr; border-left:none;">
+              <div style="font-size:12px; color:var(--text-3)">크기</div>
+              <div class="row-sub">수 GB ~ 수십 GB</div>
+              <div class="row-sub">수 MB ~ 수백 MB</div>
+            </div>
+            <div class="trow" style="grid-template-columns:1fr 1fr 1fr; border-left:none;">
+              <div style="font-size:12px; color:var(--text-3)">학습 비용</div>
+              <div class="row-sub">매우 비쌈</div>
+              <div class="row-sub">상대적으로 저렴</div>
+            </div>
+            <div class="trow" style="grid-template-columns:1fr 1fr 1fr; border-left:none;">
+              <div style="font-size:12px; color:var(--text-3)">용도</div>
+              <div class="row-sub">이미지 생성 전반</div>
+              <div class="row-sub">특정 스타일·캐릭터 학습</div>
+            </div>
+            <div class="trow" style="grid-template-columns:1fr 1fr 1fr; border-left:none; border-bottom:none;">
+              <div style="font-size:12px; color:var(--text-3)">예시</div>
+              <div class="row-sub">Flux, SDXL, Stable Diffusion</div>
+              <div class="row-sub">브랜드 스타일 LoRA ← 우리 케이스!</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="block">
+          <h3>이미지 학습 흐름</h3>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><div class="step-text"><strong>학습 이미지 준비</strong> — 브랜드 자산 34종. 해상도 통일, 배경 정리 등 전처리</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text"><strong>캡셔닝(설명 달기)</strong> — 각 이미지에 텍스트 설명을 달아줌. "brand illustration style, flat color, geometric shape" 등</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text"><strong>학습 실행</strong> — Fal.ai 또는 Replicate에 업로드 → LoRA 학습 시작 (수십 분 ~ 수 시간)</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text"><strong>테스트</strong> — 학습된 모델에 프롬프트를 넣어 브랜드 스타일로 나오는지 확인</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-text"><strong>API 연결</strong> — 학습된 모델의 API 엔드포인트를 웹앱에 붙이기</div></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="block">
+          <h3>Fal.ai vs Replicate 비교</h3>
+          <div class="concept-grid">
+            <div class="ccard">
+              <div class="ccard-icon">⚡</div>
+              <div class="ccard-title">Fal.ai</div>
+              <div class="ccard-body">
+                속도가 빠름. UI가 직관적. LoRA 학습 기능 내장.<br/><br/>
+                학습 비용이 상대적으로 저렴한 편. 실시간 스트리밍 지원으로 생성 과정 중간 확인 가능.<br/><br/>
+                <span style="color:var(--accent2); font-weight:600;">→ 빠른 프로토타이핑에 유리</span>
+              </div>
+            </div>
+            <div class="ccard">
+              <div class="ccard-icon">🔧</div>
+              <div class="ccard-title">Replicate</div>
+              <div class="ccard-body">
+                모델 종류가 더 다양. 커뮤니티 모델 많음.<br/><br/>
+                n8n 연동 레퍼런스가 많음. API 문서가 잘 되어있음.<br/><br/>
+                <span style="color:var(--accent2); font-weight:600;">→ n8n 자동화 연동엔 레퍼런스가 많음</span>
+              </div>
+            </div>
+          </div>
+          <div class="callout callout-green" style="margin-top:12px;">
+            <span class="callout-icon">💡</span>
+            <span>둘 다 무료 크레딧으로 시작할 수 있어요. 작은 테스트부터 해보고 결정하는 걸 추천!</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ 배포 & Cursor 가이드 ══ -->
+    <div class="page" id="page-deploy-guide">
+      <div class="note-page">
+        <div class="note-header">
+          <div class="note-emoji">🚀</div>
+          <div class="note-title">이 학습장, 어디에 두고 쓸까?</div>
+          <div class="note-meta"><span>✦ AI CREW PROJECT</span><span>배포 & Cursor 가이드</span></div>
+        </div>
+
+        <div class="block">
+          <h3>지금 이 파일의 정체</h3>
+          <p>지금 보고 있는 이 학습장은 <strong>HTML 파일 하나</strong>예요. 서버도 없고, 데이터베이스도 없어요. 브라우저가 파일을 열어서 보여주는 것뿐이에요.</p>
+          <div class="callout callout-info" style="margin-top:12px;">
+            <span class="callout-icon">💡</span>
+            <div>그래서 어디든 올려놓고 URL로 열면 바로 쓸 수 있어요. 가장 쉬운 방법은 <strong>GitHub + Vercel</strong> 조합이에요.</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="block">
+          <h3>📦 추천 방법: GitHub + Vercel</h3>
+          <div class="callout callout-green">
+            <span class="callout-icon">✅</span>
+            <div>둘 다 무료. 한 번 설정하면 파일 수정하고 저장할 때마다 자동으로 반영돼요.</div>
+          </div>
+          <div class="steps" style="margin-top:16px;">
+            <div class="step"><div class="step-num">1</div><div class="step-text"><strong>GitHub 가입</strong> — github.com 에서 가입 (이미 있으면 생략)</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text"><strong>새 Repository 만들기</strong> — "dev-notes" 같은 이름으로. Public으로 설정</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text"><strong>HTML 파일 업로드</strong> — 파일 이름을 반드시 <span style="font-family:var(--font-mono); font-size:12px; background:var(--surface2); padding:1px 6px; border-radius:3px;">index.html</span> 로 바꾸고 업로드</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Vercel 가입</strong> — vercel.com → "Continue with GitHub"으로 로그인</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-text"><strong>Import 하기</strong> — "Add New Project" → 방금 만든 GitHub Repository 선택 → Deploy 버튼</div></div>
+            <div class="step"><div class="step-num">6</div><div class="step-text"><strong>완료!</strong> — <span style="font-family:var(--font-mono); font-size:12px;">https://dev-notes-xxx.vercel.app</span> 같은 URL이 생겨요. 즐겨찾기 해두면 끝</div></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="block">
+          <h3>🔄 나중에 내용 업데이트하려면?</h3>
+          <div class="concept-grid">
+            <div class="ccard">
+              <div class="ccard-icon">🤖</div>
+              <div class="ccard-title">방법 A — Claude에게 맡기기 (지금처럼)</div>
+              <div class="ccard-body">
+                HTML 파일을 Claude에게 업로드하고<br/>
+                <em>"이 내용 추가해줘" / "이 페이지 수정해줘"</em><br/><br/>
+                → 수정된 파일 받아서 GitHub에 올리면 Vercel이 자동 반영<br/><br/>
+                <strong style="color:var(--accent);">✓ 지금 쓰는 방식. 가장 쉬움</strong>
+              </div>
+            </div>
+            <div class="ccard">
+              <div class="ccard-icon">⌨️</div>
+              <div class="ccard-title">방법 B — Cursor로 직접 수정</div>
+              <div class="ccard-body">
+                Cursor에서 파일 열고 AI와 대화하며 수정<br/><br/>
+                간단한 텍스트 수정이나 색깔 변경은 Cursor가 더 빠름<br/><br/>
+                <strong style="color:var(--accent2);">✓ 구조 설계는 Claude, 세부 수정은 Cursor</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="block">
+          <h3>⌨️ Cursor로 이 파일 수정하는 법</h3>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Cursor 설치</strong> — cursor.com 에서 다운로드. VS Code처럼 생겼어요</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text"><strong>파일 열기</strong> — Cursor 실행 → Open Folder → index.html이 있는 폴더 선택</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text"><strong>AI 채팅 열기</strong> — <span style="font-family:var(--font-mono); font-size:12px; background:var(--surface2); padding:1px 6px; border-radius:3px;">Cmd+L</span> (Mac) 또는 <span style="font-family:var(--font-mono); font-size:12px; background:var(--surface2); padding:1px 6px; border-radius:3px;">Ctrl+L</span> (Windows)</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text"><strong>원하는 것 말하기</strong> — "홈 페이지에 카드 하나 더 추가해줘", "배경색 바꿔줘" 등 자연어로</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-text"><strong>저장 후 GitHub push</strong> — 수정 완료되면 저장 → GitHub에 올리면 Vercel 자동 배포</div></div>
+          </div>
+          <div class="callout callout-warn" style="margin-top:16px;">
+            <span class="callout-icon">⚠️</span>
+            <div>Cursor는 파일을 직접 수정하기 때문에 큰 구조 변경은 Claude에게 먼저 물어보고 하는 걸 추천해요. Cursor는 <strong>부분 수정</strong>에 훨씬 강해요.</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="block">
+          <h3>📐 Claude vs Cursor, 언제 뭘 쓰나?</h3>
+          <div class="tcard">
+            <div class="tcard-head" style="grid-template-columns:1fr 1fr 1fr">
+              <span>상황</span><span>추천 도구</span><span>이유</span>
+            </div>
+            <div class="trow" style="grid-template-columns:1fr 1fr 1fr; border-left:none;">
+              <div class="row-sub">새 섹션/페이지 추가</div>
+              <div style="font-size:13px; font-weight:600; color:var(--accent);">Claude</div>
+              <div class="row-sub">전체 맥락 파악 후 일관성 있게 추가</div>
+            </div>
+            <div class="trow" style="grid-template-columns:1fr 1fr 1fr; border-left:none;">
+              <div class="row-sub">텍스트 수정, 색깔 변경</div>
+              <div style="font-size:13px; font-weight:600; color:var(--accent2);">Cursor</div>
+              <div class="row-sub">파일 직접 열고 바로 수정 가능</div>
+            </div>
+            <div class="trow" style="grid-template-columns:1fr 1fr 1fr; border-left:none;">
+              <div class="row-sub">레이아웃 전체 개편</div>
+              <div style="font-size:13px; font-weight:600; color:var(--accent);">Claude</div>
+              <div class="row-sub">처음부터 구조 설계가 필요</div>
+            </div>
+            <div class="trow" style="grid-template-columns:1fr 1fr 1fr; border-left:none; border-bottom:none;">
+              <div class="row-sub">버그 수정, 작은 기능 추가</div>
+              <div style="font-size:13px; font-weight:600; color:var(--accent2);">Cursor</div>
+              <div class="row-sub">파일 보면서 즉각 수정 가능</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ AI 트렌드 레퍼런스 ══ -->
+    <div class="page" id="page-trend">
+      <div class="note-page">
+        <div class="note-header">
+          <div class="note-emoji">🔥</div>
+          <div class="note-title">AI 트렌드 레퍼런스</div>
+          <div class="note-meta"><span>🔥 AI 트렌드</span><span>큐레이션 링크 모음</span></div>
+        </div>
+
+        <div class="block">
+          <p style="color:var(--text-2); font-size:14px; line-height:1.8;">AI · 바이브코딩 · 디자인 트렌드를 꾸준히 보기 좋은 채널 모음이에요. UIUX 디자이너 시각에서 골랐어요.</p>
+        </div>
+
+        <!-- 뉴스레터 & 미디어 -->
+        <div class="block">
+          <div class="block-label">📰 뉴스레터 & 미디어</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+
+            <a href="https://theladylearner.com/news/" target="_blank" class="link-card">
+              <div class="lc-left">
+                <div class="lc-icon">👩‍💻</div>
+                <div>
+                  <div class="lc-title">The Lady Learner</div>
+                  <div class="lc-url">theladylearner.com/news</div>
+                </div>
+              </div>
+              <div class="lc-desc">10년 경력 디자이너가 매주 발행. AI 이미지 생성 툴 · Midjourney 프롬프트 · 디자인 트렌드를 실습 중심으로 정리해줘요</div>
+              <div class="lc-arrow">↗</div>
+            </a>
+
+
+            <a href="https://blog.secondbrush.co.kr/" target="_blank" class="link-card">
+              <div class="lc-left">
+                <div class="lc-icon">🎨</div>
+                <div>
+                  <div class="lc-title">세컨드브러시 블로그</div>
+                  <div class="lc-url">blog.secondbrush.co.kr</div>
+                </div>
+              </div>
+              <div class="lc-desc">Daily Prompt 뉴스레터 아카이브. 매일 AI 툴 리뷰 · Midjourney 프롬프트 · 바이브코딩 실습까지 — 디자이너가 디자이너를 위해 씀</div>
+              <div class="lc-arrow">↗</div>
+            </a>
+
+          </div>
+        </div>
+
+        <!-- 학습 플랫폼 -->
+        <div class="block">
+          <div class="block-label">🎓 학습 & 커뮤니티</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+
+            <a href="https://eopla.net/magazines" target="_blank" class="link-card">
+              <div class="lc-left">
+                <div class="lc-icon">🌐</div>
+                <div>
+                  <div class="lc-title">이오플라 매거진</div>
+                  <div class="lc-url">eopla.net/magazines</div>
+                </div>
+              </div>
+              <div class="lc-desc">스타트업 창업가·직장인들의 인사이트 커뮤니티 매거진. 비즈니스·커리어 관점의 글 중심. 창업이나 사이드 프로젝트 생각 있을 때 읽기 좋아요</div>
+              <div class="lc-arrow">↗</div>
+            </a>
+
+            <a href="https://www.surfit.io/" target="_blank" class="link-card">
+              <div class="lc-left">
+                <div class="lc-icon">🏄</div>
+                <div>
+                  <div class="lc-title">서핏 (Surfit)</div>
+                  <div class="lc-url">surfit.io</div>
+                </div>
+              </div>
+              <div class="lc-desc">개발 · 디자인 · AI 관련 아티클을 큐레이션해주는 플랫폼. 트렌드 탐색에 최적</div>
+              <div class="lc-arrow">↗</div>
+            </a>
+
+          </div>
+        </div>
+
+        <!-- 나중에 추가할 것들 -->
+        <div class="block">
+          <div class="block-label">➕ 추가 예정</div>
+          <div class="callout callout-info">
+            <span class="callout-icon">💡</span>
+            <div>좋은 레퍼런스를 발견하면 여기에 추가해요. Claude한테 "트렌드 페이지에 [링크] 추가해줘" 하면 바로 넣어줄 수 있어요.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:12px; opacity:0.45;">
+            <div class="link-card" style="cursor:default;">
+              <div class="lc-left">
+                <div class="lc-icon">➕</div>
+                <div>
+                  <div class="lc-title">추가 예정</div>
+                  <div class="lc-url">발견하는 대로 추가</div>
+                </div>
+              </div>
+              <div class="lc-desc">AI 디자인 툴, 해외 뉴스레터, 유튜브 채널 등</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ 개념 지도 ══ -->
+    <div class="page" id="page-concept-map">
+      <div class="note-page">
+        <div class="note-header">
+          <div class="note-emoji">🗺️</div>
+          <div class="note-title">코딩 개념 지도</div>
+          <div class="note-meta"><span>📚 학습 노트</span><span>전체 개념 관계도</span></div>
+        </div>
+
+        <div class="block">
+          <p style="color:var(--text-2); font-size:14px; line-height:1.8;">헷갈리는 코딩 개념들을 <strong>6개 레벨</strong>로 재분류했어요. 같은 레벨끼리는 형제 관계, 위아래는 부모-자식 관계예요.</p>
+          <div style="margin-top:14px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; font-family:var(--font-mono); font-size:12px; line-height:2.2; color:var(--text-2);">
+            <div><span style="color:var(--accent); font-weight:700;">Level 1</span> &nbsp;개발 대상 &nbsp;&nbsp;&nbsp;<span style="color:var(--text-3);">웹개발 / 앱개발</span></div>
+            <div><span style="color:#5b37ed; font-weight:700;">Level 2</span> &nbsp;시스템 구조 &nbsp;<span style="color:var(--text-3);">프론트엔드 / 백엔드 / 서버 / 데이터베이스</span></div>
+            <div><span style="color:#0098b2; font-weight:700;">Level 3</span> &nbsp;통신 프로토콜<span style="color:var(--text-3);"> HTTP / API / Webhook / MCP</span></div>
+            <div><span style="color:#f55a00; font-weight:700;">Level 4</span> &nbsp;프로그래밍 언어 &nbsp;<span style="color:var(--text-3);">HTML / CSS / JS / Python…</span></div>
+            <div><span style="color:#00bdde; font-weight:700;">Level 4.5</span> 데이터 구조 &nbsp;&nbsp;<span style="color:var(--text-3);">JSON / Schema / 변수 / Property / Parameter</span></div>
+            <div><span style="color:#6541f2; font-weight:700;">Level 5</span> &nbsp;프레임워크 & 라이브러리<span style="color:var(--text-3);"> React / MUI / Storybook…</span></div>
+            <div><span style="color:#008dcf; font-weight:700;">Level 6</span> &nbsp;도구 & 서비스 &nbsp;<span style="color:var(--text-3);">Cursor / GitHub / Vercel / Replicate / n8n…</span></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ── Level 1 ── -->
+        <div class="block">
+          <div class="cm-level-header" style="background:color-mix(in srgb,var(--accent) 8%,transparent); border-left:3px solid var(--accent);">
+            <span class="cm-level-num" style="color:var(--accent);">L1</span>
+            <span class="cm-level-title">개발 대상 — 뭘 만드나?</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;">
+            <div class="cm-card" style="border-left:3px solid var(--accent);">
+              <div class="cm-card-title">웹개발</div>
+              <div class="cm-card-body">브라우저에서 열리는 것. URL 있으면 다 웹. 이 학습장도 웹이에요.</div>
+            </div>
+            <div class="cm-card" style="border-left:3px solid var(--accent);">
+              <div class="cm-card-title">앱개발</div>
+              <div class="cm-card-body">폰에 설치하는 것. iOS/Android 앱. 웹과 목적지만 달라요.</div>
+            </div>
+          </div>
+          <div class="callout callout-info" style="margin-top:12px;">
+            <span class="callout-icon">💡</span>
+            <div>코딩 = 요리하는 행위 자체. 웹개발/앱개발 = 양식당 할지 배달앱 할지 결정하는 것.</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ── Level 2 ── -->
+        <div class="block">
+          <div class="cm-level-header" style="background:rgba(91,55,237,.07); border-left:3px solid #6541f2;">
+            <span class="cm-level-num" style="color:#5b37ed;">L2</span>
+            <span class="cm-level-title">시스템 구조 — 스마트 레스토랑 비유</span>
+          </div>
+          <div class="callout" style="background:rgba(91,55,237,.05); border:1px solid rgba(101,65,242,.20); border-radius:var(--radius-sm); padding:12px 16px; display:flex; gap:10px; margin:12px 0;">
+            <span>🏠</span>
+            <div style="font-size:12px; color:var(--text-2); line-height:1.7;">프론트엔드(홀) + 백엔드(주방) + 서버(건물) + DB(창고) — 다 같은 식당 안에 있지만 역할이 달라요.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:4px;">
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(91,55,237,.10); color:#5b37ed; min-width:90px;">프론트엔드</div>
+              <div class="cm-content"><strong>손님이 보는 홀</strong>. 화면, 버튼, 색깔 — 눈에 보이는 것 전부. HTML·CSS·JS·React로 만들어요.</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(91,55,237,.10); color:#5b37ed; min-width:90px;">백엔드</div>
+              <div class="cm-content"><strong>손님 못 보는 주방</strong>. 데이터 처리, API 연결, 인증 담당. 프론트가 요청하면 주방이 처리해요.</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(91,55,237,.10); color:#5b37ed; min-width:90px;">서버</div>
+              <div class="cm-content"><strong>식당 건물 자체</strong>. 백엔드 코드가 24시간 돌아가는 컴퓨터. Vercel이 이 건물을 대신 관리해줘요.</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(91,55,237,.10); color:#5b37ed; min-width:90px;">데이터베이스</div>
+              <div class="cm-content"><strong>식재료 창고</strong>. 모든 데이터를 저장하는 곳. Supabase가 대표 서비스예요.</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(91,55,237,.10); color:#5b37ed; min-width:90px;">스키마</div>
+              <div class="cm-content"><strong>창고 선반 설계도</strong>. "고기 칸", "채소 칸" 라벨처럼 DB에 데이터를 어떤 형태로 저장할지 미리 정한 구조.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ── Level 3 ── -->
+        <div class="block">
+          <div class="cm-level-header" style="background:rgba(0,152,178,.07); border-left:3px solid #00bdde;">
+            <span class="cm-level-num" style="color:#0098b2;">L3</span>
+            <span class="cm-level-title">통신 개념 — 우주 배달 서비스 비유</span>
+          </div>
+          <div class="callout" style="background:rgba(0,152,178,.05); border:1px solid rgba(0,189,222,.20); border-radius:var(--radius-sm); padding:12px 16px; display:flex; gap:10px; margin:12px 0;">
+            <span>🚀</span>
+            <div style="font-size:12px; color:var(--text-2); line-height:1.7;">HTTP(우주 항로) → API(우주선) → Endpoint(행성 좌표) → Method(깃발) → Headers/Body(운송장+내용물)</div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:4px;">
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(0,152,178,.10); color:#0098b2; min-width:90px;">HTTP</div>
+              <div class="cm-content"><strong>우주 항로</strong>. 인터넷에서 데이터가 이동하는 기반 규칙. 모든 웹 통신이 이 위에서 일어나요. Hypertext Transfer Protocol.</div>
+            </div>
+            <div style="padding:8px 14px; background:var(--surface2); border-radius:var(--radius-sm); margin-left:0; font-size:12px; color:var(--text-3);">
+              HTTP를 구성하는 요소들:
+              <span style="color:var(--text-2); font-weight:600;">Endpoint</span>(행성 좌표/정확한 주소) ·
+              <span style="color:var(--text-2); font-weight:600;">Method</span>(행동 종류) ·
+              <span style="color:var(--text-2); font-weight:600;">GET</span>(가져오기 🚩) ·
+              <span style="color:var(--text-2); font-weight:600;">POST</span>(제출하기 🚩) ·
+              <span style="color:var(--text-2); font-weight:600;">Headers</span>(운송장/인증 정보) ·
+              <span style="color:var(--text-2); font-weight:600;">Body</span>(상자 안 내용물) ·
+              <span style="color:var(--text-2); font-weight:600;">Token/Bearer</span>(VIP 출입증)
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(0,152,178,.10); color:#0098b2; min-width:90px;">API</div>
+              <div class="cm-content"><strong>우주선/웨이터</strong>. "이 주소로 이렇게 요청하면 이걸 돌려준다"는 약속과 통로. HTTP 항로를 타고 움직여요.</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(0,152,178,.10); color:#0098b2; min-width:90px;">API 문서</div>
+              <div class="cm-content"><strong>웨이터 매뉴얼</strong>. API는 실제 통로(문), 문서는 그 문 여는 방법 설명서. 둘은 다른 것이에요!</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(0,152,178,.10); color:#0098b2; min-width:90px;">SDK</div>
+              <div class="cm-content"><strong>밀키트</strong>. API(원재료)를 다루기 쉽게 다듬어놓은 것. API는 직접 HTTP 요청을 짜야 하지만 SDK는 한 줄로 끝나요.</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(0,152,178,.10); color:#0098b2; min-width:90px;">Webhook</div>
+              <div class="cm-content"><strong>초인종/자동 알림벨</strong>. API는 내가 먼저 요청, Webhook은 서비스가 먼저 알림. 방향이 반대예요.</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(0,152,178,.10); color:#0098b2; min-width:90px;">MCP</div>
+              <div class="cm-content"><strong>AI용 만능 열쇠</strong>. AI 비서가 여러 서비스(도구)를 표준화된 방식으로 바로 쓸 수 있게 해주는 인터페이스. API가 개별 공구라면 MCP는 공구함 열쇠.</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(0,152,178,.10); color:#0098b2; min-width:90px;">파라미터</div>
+              <div class="cm-content"><strong>주문서 세부항목</strong>. "짜장면 곱빼기, 단무지 많이" 같은 상세 조건값. API 요청에 넣는 옵션들이에요.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ── Level 4 ── -->
+        <div class="block">
+          <div class="cm-level-header" style="background:rgba(245,90,0,.07); border-left:3px solid #ff5e00;">
+            <span class="cm-level-num" style="color:#f55a00;">L4</span>
+            <span class="cm-level-title">프로그래밍 언어 — 요리 언어들</span>
+          </div>
+          <div class="callout" style="background:rgba(245,90,0,.05); border:1px solid rgba(255,94,0,.20); border-radius:var(--radius-sm); padding:12px 16px; display:flex; gap:10px; margin:12px 0;">
+            <span>📝</span>
+            <div style="font-size:12px; color:var(--text-2); line-height:1.7;">언어들은 부모-자식 관계가 아니에요. 목적이 다른 <strong>독립적인 언어들</strong>이에요. JSON은 언어가 아니라 데이터 형식이에요.</div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px;">
+            <div class="cm-card" style="border-left:3px solid #ff5e00;">
+              <div class="cm-card-title">HTML</div>
+              <div class="cm-card-body"><strong>뼈대</strong>. "여기 제목, 여기 버튼" 구조 담당. 웹의 기초.</div>
+            </div>
+            <div class="cm-card" style="border-left:3px solid #ff5e00;">
+              <div class="cm-card-title">CSS</div>
+              <div class="cm-card-body"><strong>인테리어</strong>. 색깔, 크기, 레이아웃. HTML 뼈대에 입히는 옷.</div>
+            </div>
+            <div class="cm-card" style="border-left:3px solid #ff5e00;">
+              <div class="cm-card-title">JavaScript (JS)</div>
+              <div class="cm-card-body"><strong>두뇌</strong>. 버튼 클릭, 데이터 처리, API 호출 — 모든 동작 담당.</div>
+            </div>
+            <div class="cm-card" style="border-left:3px solid #ff5e00;">
+              <div class="cm-card-title">Python</div>
+              <div class="cm-card-body"><strong>만능 언어</strong>. AI/데이터에 압도적. 문법이 쉬워서 입문자 친화적.</div>
+            </div>
+            <div class="cm-card" style="border-left:3px solid #ff5e00;">
+              <div class="cm-card-title">Java</div>
+              <div class="cm-card-body"><strong>기업용</strong>. 대형 서버·안드로이드 앱에 쓰임. 지금 프로젝트엔 불필요.</div>
+            </div>
+            <div class="cm-card" style="border-left:3px solid #ff5e00; opacity:0.5;">
+              <div class="cm-card-title">JSON <span style="font-size:10px; color:#00bdde;">→ L4.5로 이동</span></div>
+              <div class="cm-card-body">언어가 아닌 데이터 포맷. 아래 L4.5 데이터 구조에서 자세히 다뤄요.</div>
+            </div>
+            <div class="cm-card" style="border-left:3px solid #ff5e00;">
+              <div class="cm-card-title">마크다운</div>
+              <div class="cm-card-body"><strong>간단한 메모법</strong>. # 제목, **굵게** 같은 기호로 글 꾸미기. 개발 문서에 많이 씀.</div>
+            </div>
+            <div class="cm-card" style="border-left:3px solid #ff5e00;">
+              <div class="cm-card-title">.env</div>
+              <div class="cm-card-body"><strong>금고</strong>. API 키 등 비밀값 보관. 코드와 분리해서 GitHub에 절대 올리면 안 됨.</div>
+            </div>
+          </div>
+          <div style="margin-top:12px; background:var(--surface2); border-radius:var(--radius-sm); padding:12px 16px; font-size:12px; color:var(--text-2);">
+            <strong>웹 3형제 쌓이는 순서:</strong> HTML(뼈대) → CSS(옷) → JS(두뇌) — 이 순서로 레이어가 쌓여요.
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ── Level 4.5: 데이터 구조 ── -->
+        <div class="block">
+          <div class="cm-level-header" style="background:rgba(0,189,222,.07); border-left:3px solid #00bdde;">
+            <span class="cm-level-num" style="color:#00bdde;">L4.5</span>
+            <span class="cm-level-title">데이터 구조 — 데이터를 담고 정리하는 방식</span>
+          </div>
+          <div class="callout" style="background:rgba(0,189,222,.05); border:1px solid rgba(0,189,222,.20); border-radius:var(--radius-sm); padding:12px 16px; display:flex; gap:10px; margin:12px 0;">
+            <span>📦</span>
+            <div style="font-size:12px; color:var(--text-2); line-height:1.7;">언어도 아니고 도구도 아닌, <strong>데이터를 어떻게 담고 구조화하는지</strong>에 관한 개념들이에요.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:4px;">
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(0,189,222,.10); color:#00bdde; min-width:90px;">JSON</div>
+              <div class="cm-content"><strong>공용 택배 상자 규격</strong>. 언어 ❌ 데이터 포맷 ✅. 어떤 언어로든 읽을 수 있는 데이터 형식. API 응답이 거의 다 JSON이에요.</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(0,189,222,.10); color:#00bdde; min-width:90px;">Schema</div>
+              <div class="cm-content"><strong>창고 선반 설계도</strong>. DB에 데이터를 어떤 형태로 저장할지 미리 정한 구조. "이름은 텍스트, 나이는 숫자" 같은 것.</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(0,189,222,.10); color:#00bdde; min-width:90px;">변수</div>
+              <div class="cm-content"><strong>이름표 붙은 상자</strong>. userName = "지선" 처럼 값을 담아두는 그릇. 코드 어디서든 꺼내쓸 수 있어요.</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(0,189,222,.10); color:#00bdde; min-width:90px;">Property</div>
+              <div class="cm-content"><strong>물건의 속성</strong>. 버튼의 색깔, 크기, 텍스트 같은 특성값. React에서는 props라고 불러요.</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(0,189,222,.10); color:#00bdde; min-width:90px;">Parameter</div>
+              <div class="cm-content"><strong>주문서 세부항목</strong>. "짜장면 곱빼기, 단무지 많이" 처럼 API 요청에 넣는 상세 조건값. 함수에 넣는 입력값이기도 해요.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ── Level 5 ── -->
+        <div class="block">
+          <div class="cm-level-header" style="background:rgba(101,65,242,.07); border-left:3px solid #6541f2;">
+            <span class="cm-level-num" style="color:#6541f2;">L5</span>
+            <span class="cm-level-title">프레임워크 & 라이브러리 — 이케아 시스템</span>
+          </div>
+          <div class="callout" style="background:rgba(101,65,242,.05); border:1px solid rgba(101,65,242,.20); border-radius:var(--radius-sm); padding:12px 16px; display:flex; gap:10px; margin:12px 0;">
+            <span>🛋</span>
+            <div style="font-size:12px; color:var(--text-2); line-height:1.7;">라이브러리 = 이케아 시스템 전체 / React = 이케아 조립 방식 / MUI = 이케아 주방 수납장 세트.<br/>피그마 UI Kit처럼 — 버튼 픽셀 단위로 안 그리고 Kit 가져다 쓰는 것과 똑같아요!</div>
+          </div>
+          <div style="font-family:var(--font-mono); font-size:12px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 18px; line-height:2.2; color:var(--text-2); margin-bottom:14px;">
+            <div style="color:var(--text-3);">라이브러리 (전체 집합)</div>
+            <div style="padding-left:16px;">↳ <span style="color:#6541f2; font-weight:600;">React</span> (특정 브랜드/방식 — JS로 화면 효율적으로 그리는 라이브러리)</div>
+            <div style="padding-left:32px;">↳ <span style="color:#6541f2;">MUI</span> (React 전용 구글 디자인 UI 부품 세트)</div>
+            <div style="padding-left:32px;">↳ <span style="color:#6541f2;">Framer Motion</span> (React 전용 애니메이션 세트)</div>
+            <div style="padding-left:32px;">↳ <span style="color:#6541f2;">Lucide React</span> (React 전용 아이콘 세트)</div>
+            <div style="padding-left:16px;">↳ <span style="color:#6541f2; font-weight:600;">Storybook</span> (UI 컴포넌트 전시실 — React와 함께 씀)</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(101,65,242,.10); color:#6541f2; min-width:90px;">라이브러리</div>
+              <div class="cm-content"><strong>조립 가구 키트</strong>. 누군가 미리 만든 코드 모음. 처음부터 안 짜고 가져다 써요.</div>
+            </div>
+            <div class="cm-row">
+              <div class="cm-badge" style="background:rgba(101,65,242,.10); color:#6541f2; min-width:90px;">프레임워크</div>
+              <div class="cm-content"><strong>아파트</strong> (라이브러리와 차이). 라이브러리는 내가 필요할 때 부르는 도구, 프레임워크는 그 안에 들어가서 규칙대로 살아야 하는 구조.</div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ── Level 6 ── -->
+        <div class="block">
+          <div class="cm-level-header" style="background:rgba(0,174,255,.07); border-left:3px solid #00aeff;">
+            <span class="cm-level-num" style="color:#008dcf;">L6</span>
+            <span class="cm-level-title">도구 & 서비스 — 실제로 쓰는 것들</span>
+          </div>
+          <div class="callout" style="background:rgba(0,174,255,.05); border:1px solid rgba(0,174,255,.20); border-radius:var(--radius-sm); padding:12px 16px; display:flex; gap:10px; margin:12px 0;">
+            <span>🛠</span>
+            <div style="font-size:12px; color:var(--text-2); line-height:1.7;">설치하거나 가입해서 쓰는 <strong>실제 제품들</strong>이에요. 개념이 아니라 서비스.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:16px;">
+
+            <div>
+              <div style="font-size:11px; font-weight:700; letter-spacing:1.5px; color:var(--text-3); font-family:var(--font-mono); margin-bottom:8px;">IDE — 코드 짜는 주방 조리대</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div class="cm-card" style="border-left:3px solid #00aeff;"><div class="cm-card-title">Cursor</div><div class="cm-card-body">AI 내장 코드 에디터. 바이브코딩 핵심. VS Code 기반.</div></div>
+                <div class="cm-card" style="border-left:3px solid #00aeff;"><div class="cm-card-title">Claude Code</div><div class="cm-card-body">터미널에서 쓰는 Claude. 파일 직접 수정 가능. 에이전트 방식.</div></div>
+                <div class="cm-card" style="border-left:3px solid #00aeff;"><div class="cm-card-title">Codex</div><div class="cm-card-body">OpenAI 코딩 AI. Cursor 안에서 모델로 선택 가능.</div></div>
+                <div class="cm-card" style="border-left:3px solid #00aeff;"><div class="cm-card-title">Antigravity</div><div class="cm-card-body">국내 바이브코딩 도구. Cursor와 비슷한 포지션.</div></div>
+              </div>
+            </div>
+
+            <div>
+              <div style="font-size:11px; font-weight:700; letter-spacing:1.5px; color:var(--text-3); font-family:var(--font-mono); margin-bottom:8px;">버전관리 — 게임 세이브 포인트</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div class="cm-card" style="border-left:3px solid #00aeff;"><div class="cm-card-title">Git</div><div class="cm-card-body"><strong>시스템(개념)</strong>. 코드 변경 이력 추적. "타임머신 소프트웨어".</div></div>
+                <div class="cm-card" style="border-left:3px solid #00aeff;"><div class="cm-card-title">GitHub</div><div class="cm-card-body"><strong>서비스(제품)</strong>. Git 기록을 올리는 온라인 창고. Git ≠ GitHub.</div></div>
+              </div>
+            </div>
+
+            <div>
+              <div style="font-size:11px; font-weight:700; letter-spacing:1.5px; color:var(--text-3); font-family:var(--font-mono); margin-bottom:8px;">인프라 & AI 엔진</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div class="cm-card" style="border-left:3px solid #00aeff;"><div class="cm-card-title">Vercel</div><div class="cm-card-body">서버 + 배포 플랫폼. 코드를 올리면 자동으로 서버에 올려서 공개까지 해줘요. 서버 직접 안 다뤄도 됨.</div></div>
+                <div class="cm-card" style="border-left:3px solid #00aeff;"><div class="cm-card-title">Supabase</div><div class="cm-card-body">데이터베이스 서비스. 바이브코딩 프로젝트의 단골 창고.</div></div>
+                <div class="cm-card" style="border-left:3px solid #00aeff;"><div class="cm-card-title">Replicate</div><div class="cm-card-body">AI 모델 빌려쓰기. LoRA 모델 올려두고 API 호출. 모델 종류 다양.</div></div>
+                <div class="cm-card" style="border-left:3px solid #00aeff;"><div class="cm-card-title">n8n</div><div class="cm-card-body">노코드 자동화. "A 발생하면 B 해줘" GUI로 만드는 것. 레고 블록 조립.</div></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ── 헷갈리는 TOP 10 ── -->
+        <div class="block">
+          <h3>🤯 가장 헷갈리는 개념 TOP 10</h3>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+
+            <div class="cm-confused">
+              <div class="cm-confused-num">01</div>
+              <div><span class="cm-confused-title">API vs API 문서</span> — API는 실제 문, 문서는 그 문 여는 방법 설명서. 둘은 다른 것.</div>
+            </div>
+            <div class="cm-confused">
+              <div class="cm-confused-num">02</div>
+              <div><span class="cm-confused-title">Git vs GitHub</span> — Git은 내 컴퓨터의 타임머신 소프트웨어, GitHub은 그 기록을 올리는 온라인 보관소.</div>
+            </div>
+            <div class="cm-confused">
+              <div class="cm-confused-num">03</div>
+              <div><span class="cm-confused-title">라이브러리 vs 프레임워크</span> — 라이브러리는 내가 필요할 때 부르는 도구, 프레임워크는 그 안에서 규칙대로 살아야 하는 아파트.</div>
+            </div>
+            <div class="cm-confused">
+              <div class="cm-confused-num">04</div>
+              <div><span class="cm-confused-title">JSON vs 언어</span> — JSON은 언어가 아니라 공용 데이터 포맷(택배 상자 규격). 어떤 언어로든 읽을 수 있어요.</div>
+            </div>
+            <div class="cm-confused">
+              <div class="cm-confused-num">05</div>
+              <div><span class="cm-confused-title">Vercel vs 서버</span> — 서버는 개념적인 컴퓨터, Vercel은 그 컴퓨터를 클릭 몇 번으로 빌려주는 임대 서비스.</div>
+            </div>
+            <div class="cm-confused">
+              <div class="cm-confused-num">06</div>
+              <div><span class="cm-confused-title">GET vs POST</span> — GET은 정보 가져오기(주소창에 노출), POST는 정보 제출하기(숨겨서 보냄).</div>
+            </div>
+            <div class="cm-confused">
+              <div class="cm-confused-num">07</div>
+              <div><span class="cm-confused-title">Token vs API Key</span> — API Key는 현관 비밀번호(영구), Token은 일정 시간만 유효한 임시 출입증.</div>
+            </div>
+            <div class="cm-confused">
+              <div class="cm-confused-num">08</div>
+              <div><span class="cm-confused-title">SDK vs API</span> — API는 원재료, SDK는 그걸 다루기 쉽게 다듬어놓은 밀키트.</div>
+            </div>
+            <div class="cm-confused">
+              <div class="cm-confused-num">09</div>
+              <div><span class="cm-confused-title">터미널 vs IDE</span> — IDE는 화방(그림 그리는 공간), 터미널은 화방 사장님께 문자로 명령 내리는 인터컴.</div>
+            </div>
+            <div class="cm-confused">
+              <div class="cm-confused-num">10</div>
+              <div><span class="cm-confused-title">n8n vs 코딩</span> — n8n은 레고 블록 조립(GUI), 코딩은 레고 블록 자체를 깎아 만드는 작업.</div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ── 전체 흐름 ── -->
+        <div class="block">
+          <h3>🔗 지선씨 프로젝트로 보는 전체 흐름</h3>
+          <div style="background:var(--surface2); border-radius:var(--radius); padding:20px; font-family:var(--font-mono); font-size:12px; line-height:2.2; color:var(--text-2); border:1px solid var(--border); margin-top:12px;">
+            <div><span style="color:var(--accent); font-weight:700;">[L6] Cursor(IDE)</span> 에서 바이브코딩으로 코드 작성</div>
+            <div style="padding-left:16px;">↓ <span style="color:#f55a00;">[L4] HTML + CSS + JS + React</span> 로 프론트엔드 구성</div>
+            <div style="padding-left:16px;">↓ <span style="color:#0098b2;">[L3] API 호출</span> (HTTP 통신, JSON으로 데이터 전달)</div>
+            <div style="padding-left:16px;">↓ <span style="color:#008dcf;">[L6] Replicate</span> 에서 LoRA 모델 실행 → 이미지 반환</div>
+            <div style="padding-left:16px;">↓ <span style="color:#5b37ed;">[L2] 프론트엔드</span> 화면에 이미지 표시</div>
+            <div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border);">
+            <span style="color:#0098b2;">[L3] .env</span> 에 API키 보관 →
+            <span style="color:#008dcf;">[L6] GitHub</span> 에 코드 저장 →
+            <span style="color:#008dcf;">[L6] Vercel</span> 자동 배포
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// ── state ──
+let currentPage = 'home';
+const pageMap = {
+  home:            { group: '', title: '홈', navId: 'nav-home' },
+  'concept-map':   { group: '', title: '개념 지도', navId: 'nav-concept-map' },
+  ext:             { group: '기초 학습', title: '파일 확장자', navId: 'nav-ext' },
+  terminal:        { group: '기초 학습', title: '터미널 명령어', navId: 'nav-terminal' },
+  api:             { group: '기초 학습', title: 'API · HTTP 기초', navId: 'nav-api' },
+  n8n:             { group: '기초 학습', title: 'n8n 자동화', navId: 'nav-n8n' },
+  lora:            { group: '바이브코딩 실습', title: 'LoRA & AI 이미지', navId: 'nav-lora' },
+  'deploy-guide':  { group: '바이브코딩 실습', title: '배포 & Cursor 가이드', navId: 'nav-deploy-guide' },
+  trend:           { group: 'AI 트렌드', title: '레퍼런스 탐색', navId: 'nav-trend' },
+  'aicrew-overview': { group: '✦ AI CREW', title: '프로젝트 개요', navId: 'nav-aicrew-overview' },
+};
+
+// ── show page (internal, no history push) ──
+function _renderPage(id) {
+  if (!pageMap[id]) return;
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item, .nav-home').forEach(n => n.classList.remove('active'));
+
+  document.getElementById('page-' + id).classList.add('active');
+  const navEl = document.getElementById('nav-' + id);
+  if (navEl) navEl.classList.add('active');
+
+  const info = pageMap[id];
+
+  // 노션 스타일 브레드크럼 렌더
+  const bc = document.getElementById('topbar-breadcrumb');
+  bc.innerHTML = '';
+
+  if (id === 'home') {
+    // 홈: 타이틀만
+    const cur = document.createElement('span');
+    cur.className = 'bc-item bc-current';
+    cur.textContent = '홈';
+    bc.appendChild(cur);
+  } else {
+    // 홈 크럼
+    const home = document.createElement('span');
+    home.className = 'bc-item';
+    home.textContent = '홈';
+    home.onclick = () => showPage('home');
+    bc.appendChild(home);
+
+    // 그룹이 있으면 중간 크럼
+    if (info.group && !info.group.startsWith('✦')) {
+      const sep1 = document.createElement('span');
+      sep1.className = 'bc-sep';
+      sep1.textContent = '›';
+      bc.appendChild(sep1);
+
+      const grp = document.createElement('span');
+      grp.className = 'bc-item';
+      grp.textContent = info.group;
+      // 그룹 클릭 시 홈으로 (섹션 앵커 없으므로)
+      grp.onclick = () => showPage('home');
+      bc.appendChild(grp);
+    }
+
+    // 현재 페이지
+    const sep2 = document.createElement('span');
+    sep2.className = 'bc-sep';
+    sep2.textContent = '›';
+    bc.appendChild(sep2);
+
+    const cur = document.createElement('span');
+    cur.className = 'bc-item bc-current';
+    cur.textContent = info.title;
+    bc.appendChild(cur);
+  }
+
+  currentPage = id;
+  document.getElementById('content').scrollTop = 0;
+
+  // mobile: 사이드바 닫기
+  if (window.innerWidth <= 768) {
+    closeSidebarMobile();
+  }
+}
+
+// ── show page + history push ──
+function showPage(id) {
+  if (!pageMap[id] || id === currentPage) return;
+  history.pushState({ page: id }, '', '#' + id);
+  _renderPage(id);
+}
+
+// ── browser back/forward ──
+window.addEventListener('popstate', (e) => {
+  const id = e.state?.page || 'home';
+  _renderPage(id);
+});
+
+// ── toggle group ──
+function toggleGroup(id) {
+  const grp = document.getElementById(id);
+  const items = grp.querySelector('.nav-group-items');
+  const isCollapsed = grp.classList.contains('collapsed');
+  if (isCollapsed) {
+    grp.classList.remove('collapsed');
+    items.style.maxHeight = items.scrollHeight + 'px';
+  } else {
+    grp.classList.add('collapsed');
+    items.style.maxHeight = '0';
+  }
+}
+
+// ── sidebar: desktop push / mobile MUI drawer ──
+function isMobile() { return window.innerWidth <= 768; }
+
+function toggleSidebar() {
+  if (isMobile()) {
+    const isOpen = document.body.classList.contains('sidebar-open');
+    if (isOpen) {
+      closeSidebarMobile();
+    } else {
+      openSidebarMobile();
+    }
+  } else {
+    document.body.classList.toggle('sidebar-collapsed');
+  }
+}
+
+function openSidebarMobile() {
+  const overlay = document.getElementById('sidebar-overlay');
+  document.body.classList.add('sidebar-open');
+  overlay.style.display = 'block';
+  requestAnimationFrame(() => overlay.classList.add('visible'));
+}
+
+function closeSidebarMobile() {
+  const overlay = document.getElementById('sidebar-overlay');
+  overlay.classList.remove('visible');
+  document.body.classList.remove('sidebar-open');
+  setTimeout(() => { overlay.style.display = 'none'; }, 220);
+}
+
+// 리사이즈 시 모드 전환
+window.addEventListener('resize', () => {
+  if (!isMobile()) {
+    // 데스크탑으로 전환 시 모바일 오버레이 정리
+    closeSidebarMobile();
+  }
+});
+
+// ── theme ──
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeLabel').textContent = isDark ? '다크 모드로 전환' : '라이트 모드로 전환';
+}
+
+// ── date ──
+function setDate() {
+  const d = new Date();
+  const s = d.toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' });
+  document.getElementById('topbar-date').textContent = s;
+}
+setDate();
+
+// ── init: URL hash 지원 ──
+const initPage = location.hash ? location.hash.slice(1) : 'home';
+history.replaceState({ page: initPage }, '', initPage !== 'home' ? '#' + initPage : '');
+_renderPage(pageMap[initPage] ? initPage : 'home');
+</script>
+</body>
+</html>
